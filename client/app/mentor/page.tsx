@@ -11,6 +11,7 @@ import {
 } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { NavigationBar } from "@/components/NavigationBar";
 import { useRouter } from "next/navigation";
 
 export default function MentorDashboard() {
@@ -135,16 +136,16 @@ export default function MentorDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">ProjectPilot</h1>
-          <p className="text-xs text-gray-500">Mentor Portal • {user?.name} ({user?.email})</p>
-        </div>
-        <Button variant="outline" onClick={logout}>
-          Sign Out
-        </Button>
-      </header>
+      {/* Top Header with Logo, Home, Back, and Reload */}
+      <NavigationBar
+        variant="light"
+        subtitle={`Mentor Portal • ${user?.name || "Mentor"}`}
+        rightContent={
+          <Button size="sm" variant="outline" onClick={logout}>
+            Sign Out
+          </Button>
+        }
+      />
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-6">

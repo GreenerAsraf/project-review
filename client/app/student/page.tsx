@@ -6,6 +6,7 @@ import { apiRequest, Submission } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NavigationBar } from "@/components/NavigationBar";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 
@@ -146,19 +147,19 @@ export default function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Navbar */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">ProjectPilot</h1>
-          <p className="text-xs text-gray-500">Student Portal • {user?.name} ({user?.email})</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Button onClick={() => setShowModal(true)}>+ Submit Project</Button>
-          <Button variant="outline" onClick={logout}>
-            Sign Out
-          </Button>
-        </div>
-      </header>
+      {/* Top Navbar with Logo, Home, Back, and Reload */}
+      <NavigationBar
+        variant="light"
+        subtitle={`Student Portal • ${user?.name || "Student"}`}
+        rightContent={
+          <div className="flex items-center space-x-3">
+            <Button size="sm" onClick={() => setShowModal(true)}>+ Submit Project</Button>
+            <Button size="sm" variant="outline" onClick={logout}>
+              Sign Out
+            </Button>
+          </div>
+        }
+      />
 
       {/* Main Container */}
       <main className="max-w-6xl mx-auto px-6 py-8">
