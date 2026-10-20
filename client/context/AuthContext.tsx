@@ -45,8 +45,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("token", newToken);
     setToken(newToken);
     setUser(newUser);
-    if (newUser.role === "REVIEWER") {
-      router.push("/reviewer");
+    if (newUser.role === "MENTOR") {
+      router.push("/mentor");
     } else {
       router.push("/student");
     }

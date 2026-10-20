@@ -4,29 +4,51 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: "STUDENT" | "REVIEWER" | "ADMIN";
-}
-
-export interface Review {
-  id: string;
-  feedback: string;
-  score: number;
-  status: "PENDING" | "UNDER_REVIEW" | "APPROVED" | "REJECTED";
-  reviewer: { id: string; name: string; email: string };
-  createdAt: string;
+  role: "STUDENT" | "MENTOR";
 }
 
 export interface Submission {
   id: string;
-  title: string;
-  description: string;
+  projectName: string;
   repoUrl: string;
   liveUrl?: string | null;
-  status: "PENDING" | "UNDER_REVIEW" | "APPROVED" | "REJECTED";
+  description: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
   studentId: string;
-  student?: { id: string; name: string; email: string };
-  reviews?: Review[];
   createdAt: string;
+  updatedAt: string;
+  student?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+export interface MentorStats {
+  pending: number;
+  approved: number;
+  rejected: number;
+  total: number;
+}
+
+export interface PaginationMeta {
+  totalRecords: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
+export interface MentorSubmissionsResponse {
+  submissions: Submission[];
+  pagination: PaginationMeta;
+  stats: MentorStats;
+}
+
+export interface ApiErrorResponse {
+  message?: string;
+  errors?: Array<{ field: string; message: string }>;
 }
 
 export async function apiRequest<T>(
@@ -49,10 +71,16 @@ export async function apiRequest<T>(
     headers,
   });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    throw new Error(data.message || "An error occurred during API request");
+    const error = new Error(data.message || "An unexpected error occurred.") as Error & {
+      status: number;
+      errors?: Array<{ field: string; message: string }>;
+    };
+    error.status = res.status;
+    error.errors = data.errors;
+    throw error;
   }
 
   return data as T;

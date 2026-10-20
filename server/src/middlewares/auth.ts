@@ -21,7 +21,7 @@ export const authenticateJWT = (
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(401).json({ message: "Access denied: Missing or malformed token" });
+    res.status(401).json({ message: "Access denied: Missing or malformed authentication token" });
     return;
   }
 
@@ -29,10 +29,11 @@ export const authenticateJWT = (
 
   try {
     const decoded = jwt.verify(token, config.jwtSecret) as AuthUser;
+    // Bind verified user payload to request
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(403).json({ message: "Invalid or expired token" });
+    res.status(401).json({ message: "Invalid, expired, or tampered token" });
   }
 };
 
@@ -45,7 +46,7 @@ export const requireRole = (allowedRoles: Role[]) => {
 
     if (!allowedRoles.includes(req.user.role)) {
       res.status(403).json({
-        message: `Forbidden: Requires one of [${allowedRoles.join(", ")}] roles`,
+        message: `Forbidden: Access requires ${allowedRoles.join(" or ")} role`,
       });
       return;
     }

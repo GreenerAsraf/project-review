@@ -12,8 +12,8 @@ export default function Home() {
 
   useEffect(() => {
     if (!loading && user) {
-      if (user.role === "REVIEWER") {
-        router.push("/reviewer");
+      if (user.role === "MENTOR") {
+        router.push("/mentor");
       } else {
         router.push("/student");
       }
@@ -24,13 +24,13 @@ export default function Home() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 text-center">
       <div className="max-w-xl space-y-6">
         <div className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full uppercase tracking-wider">
-          Full-Stack Coursework Platform
+          Student & Mentor Assessment Platform
         </div>
         <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">
           ProjectPilot
         </h1>
         <p className="text-lg text-gray-600">
-          A streamlined dashboard for students to submit projects and reviewers to provide evaluations, ratings, and feedback.
+          A streamlined coursework submission dashboard for students to submit projects and mentors to review, evaluate, and provide approvals.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
@@ -41,7 +41,7 @@ export default function Home() {
           </Link>
           <Link href="/register">
             <Button variant="outline" size="lg" className="w-full sm:w-auto">
-              Create an Account
+              Create Student Account
             </Button>
           </Link>
         </div>
