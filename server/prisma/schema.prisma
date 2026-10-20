@@ -1,0 +1,52 @@
+// Prisma schema for Project Submission and Review Dashboard
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  MENTOR
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           String       @id @default(uuid())
+  name         String
+  email        String       @unique
+  passwordHash String
+  role         Role         @default(STUDENT)
+  submissions  Submission[] @relation("StudentSubmissions")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([email])
+}
+
+model Submission {
+  id          String           @id @default(uuid())
+  studentId   String
+  student     User             @relation("StudentSubmissions", fields: [studentId], references: [id], onDelete: Cascade)
+  projectName String
+  repoUrl     String
+  liveUrl     String?
+  description String
+  status      SubmissionStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  // Database-level constraint: Prevents duplicate repository submissions by the same student
+  @@unique([studentId, repoUrl], name: "unique_student_repo")
+  @@index([studentId])
+  @@index([status])
+}
