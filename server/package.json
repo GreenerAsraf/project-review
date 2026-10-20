@@ -10,7 +10,9 @@
     "test": "jest",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "ts-node-dev --transpile-only prisma/seed.ts"
+    "prisma:deploy": "prisma db push",
+    "prisma:seed": "ts-node-dev --transpile-only prisma/seed.ts",
+    "start:prod": "node dist/server.js"
   },
   "prisma": {
     "seed": "ts-node-dev --transpile-only prisma/seed.ts"

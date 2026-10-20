@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: projectpilot-api
+    runtime: node
+    region: singapore
+    plan: free
+    rootDir: server
+    buildCommand: npm install && npm run build && npm run prisma:generate
+    startCommand: node dist/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false          # set manually in Render dashboard
+      - key: JWT_SECRET
+        generateValue: true  # Render will auto-generate a secure value
+      - key: JWT_EXPIRES_IN
+        value: 1d
+      - key: CLIENT_URL
+        sync: false          # set to your Vercel frontend URL after deploy
+      - key: INITIAL_MENTOR_EMAIL
+        sync: false
+      - key: INITIAL_MENTOR_PASSWORD
+        sync: false
+      - key: INITIAL_MENTOR_NAME
+        sync: false

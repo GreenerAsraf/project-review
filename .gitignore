@@ -15,8 +15,11 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
-*.env
+# Explicitly allow .env.example files
 !.env.example
+!**/.env.example
+# Catch-all for other .env variants
+*.env
 
 # Logs
 npm-debug.log*
