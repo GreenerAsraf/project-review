@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Topic 1C — Authentication vs. Authorization (RBAC) | ProjectPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0a0e1a;
+      --surface:  rgba(255,255,255,0.04);
+      --border:   rgba(255,255,255,0.10);
+      --accent1:  #6c63ff;
+      --accent2:  #00d4ff;
+      --accent3:  #ff6b9d;
+      --success:  #00e5a0;
+      --warning:  #ffb347;
+      --danger:   #ff4d6d;
+      --text:     #e8eaf6;
+      --muted:    #8890a6;
+      --card:     rgba(255,255,255,0.055);
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+    }
+
+    #stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .star { position: absolute; border-radius: 50%; background: #fff; animation: twinkle var(--d, 3s) ease-in-out infinite alternate; }
+    @keyframes twinkle { from { opacity: .1; } to { opacity: .7; } }
+
+    #deck { position: fixed; inset: 0; z-index: 1; }
+
+    .slide {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      padding: 48px 64px;
+      opacity: 0; pointer-events: none;
+      transition: opacity .55s ease, transform .55s ease;
+      transform: translateX(60px);
+    }
+    .slide.active { opacity: 1; pointer-events: all; transform: translateX(0); }
+    .slide.exit-left { opacity: 0; transform: translateX(-60px); }
+
+    .top-bar {
+      position: absolute; top: 20px; left: 0; right: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px;
+    }
+    .topic-badge {
+      font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .timestamp-badge {
+      font-size: 11px; font-weight: 600; letter-spacing: 1px;
+      color: var(--muted);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px 14px;
+    }
+
+    #controls {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      z-index: 100;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .nav-btn {
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .2s;
+      backdrop-filter: blur(12px);
+    }
+    .nav-btn:hover { background: var(--accent1); border-color: var(--accent1); transform: scale(1.12); }
+    .nav-btn:disabled { opacity: .3; cursor: not-allowed; }
+    #slide-counter {
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 6px 18px;
+      backdrop-filter: blur(12px);
+    }
+
+    #progress-bar {
+      position: fixed; bottom: 0; left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      transition: width .4s ease;
+      z-index: 200;
+    }
+
+    #dots {
+      position: fixed; right: 28px; top: 50%; transform: translateY(-50%);
+      z-index: 100;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .dot.active { background: var(--accent1); transform: scale(1.5); }
+    .dot:hover { background: var(--accent2); }
+
+    h1.slide-title {
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      font-weight: 900; line-height: 1.1; text-align: center;
+    }
+    h2.slide-title {
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-weight: 800; line-height: 1.15; text-align: center; margin-bottom: 6px;
+    }
+    .subtitle { font-size: clamp(.9rem, 1.6vw, 1.2rem); color: var(--muted); text-align: center; margin-top: 10px; }
+    .grad { background: linear-gradient(135deg, var(--accent1), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .grad-r { background: linear-gradient(135deg, var(--accent3), var(--warning)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; max-width: 980px; margin-top: 28px; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 24px;
+      backdrop-filter: blur(16px);
+      transition: transform .25s, box-shadow .25s;
+    }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(108,99,255,.2); }
+
+    .card-icon { font-size: 2rem; margin-bottom: 14px; }
+    .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+    .card-body { font-size: .88rem; color: var(--muted); line-height: 1.65; }
+
+    .flow {
+      display: flex; align-items: center;
+      width: 100%; max-width: 900px;
+      margin: 32px auto 0;
+    }
+    .flow-node {
+      flex: 1;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 18px 12px;
+      text-align: center; font-size: .82rem; font-weight: 600;
+      backdrop-filter: blur(12px);
+    }
+    .flow-node .fn-icon { font-size: 1.6rem; display: block; margin-bottom: 6px; }
+    .flow-arrow {
+      flex: 0 0 44px;
+      text-align: center; font-size: 1.4rem; color: var(--muted);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .flow-label { font-size: .72rem; color: var(--muted); margin-top: 4px; display: block; }
+
+    .code-block {
+      background: rgba(0,0,0,.55);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 24px;
+      font-family: 'Fira Code', monospace;
+      font-size: .78rem;
+      line-height: 1.75;
+      width: 100%; max-width: 860px;
+      margin-top: 24px;
+      overflow-x: auto;
+      text-align: left;
+      backdrop-filter: blur(16px);
+    }
+    .kw  { color: #c792ea; }
+    .fn  { color: #82aaff; }
+    .str { color: #c3e88d; }
+    .cm  { color: #546e7a; font-style: italic; }
+    .hl  { background: rgba(108,99,255,.22); border-radius: 4px; padding: 0 2px; }
+    .code-title { font-size: .78rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+
+    .bn-note {
+      font-family: 'Hind Siliguri', sans-serif;
+      font-size: .92rem; color: var(--muted);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 20px;
+      margin-top: 20px; width: 100%; max-width: 860px;
+      line-height: 1.9; text-align: left;
+    }
+    .bn-note strong { color: var(--text); }
+
+    .bullet-list {
+      list-style: none; text-align: left; width: 100%; max-width: 820px;
+      margin-top: 24px; display: flex; flex-direction: column; gap: 14px;
+    }
+    .bullet-list li {
+      display: flex; align-items: flex-start; gap: 14px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px 20px;
+      font-size: .9rem; line-height: 1.6;
+      backdrop-filter: blur(12px);
+    }
+    .bullet-list li .bi { font-size: 1.3rem; flex-shrink: 0; margin-top: 1px; }
+
+    .compare-table { width: 100%; max-width: 860px; border-collapse: separate; border-spacing: 0; margin-top: 28px; }
+    .compare-table th, .compare-table td { padding: 14px 20px; text-align: left; border-bottom: 1px solid var(--border); font-size: .88rem; }
+    .compare-table th { font-size: .78rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+    .compare-table thead { background: rgba(108,99,255,.15); }
+    .compare-table tbody tr { background: var(--card); transition: background .2s; }
+    .compare-table tbody tr:hover { background: rgba(255,255,255,.06); }
+    .compare-table .tag { display: inline-block; font-size: .72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .tag-authn { background: rgba(0,212,255,.15); color: var(--accent2); }
+    .tag-authz { background: rgba(108,99,255,.15); color: var(--accent1); }
+
+    .pill { display: inline-block; font-size: .72rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; margin: 2px; }
+    .pill-blue   { background: rgba(0,212,255,.15); color: var(--accent2); }
+    .pill-purple { background: rgba(108,99,255,.15); color: var(--accent1); }
+    .pill-green  { background: rgba(0,229,160,.15); color: var(--success); }
+    .pill-red    { background: rgba(255,77,109,.15); color: var(--danger); }
+
+    .hero-icon { font-size: 4rem; margin-bottom: 20px; animation: float 4s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
+    .meta-row { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 24px; }
+
+    .warn-box {
+      background: rgba(255,77,109,.08); border: 1px solid rgba(255,77,109,.35);
+      border-radius: 16px; padding: 20px 24px; font-size: .88rem; line-height: 1.7;
+    }
+    .warn-box .wt { font-weight: 700; color: var(--danger); font-size: .95rem; margin-bottom: 6px; }
+    .success-box {
+      background: rgba(0,229,160,.07); border: 1px solid rgba(0,229,160,.3);
+      border-radius: 16px; padding: 20px 24px; font-size: .88rem; line-height: 1.7;
+    }
+    .success-box .st { font-weight: 700; color: var(--success); font-size: .95rem; margin-bottom: 6px; }
+
+    .summary-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+      width: 100%; max-width: 980px; margin-top: 28px;
+    }
+    .sum-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 22px 18px;
+      text-align: center; backdrop-filter: blur(12px);
+    }
+    .sum-card .sum-icon { font-size: 2.2rem; margin-bottom: 10px; }
+    .sum-card .sum-label { font-size: .78rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .sum-card .sum-val { font-size: .92rem; line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+<div id="stars"></div>
+<div id="deck">
+
+  <!-- SLIDE 1 — TITLE -->
+  <section class="slide" id="slide-1">
+    <div class="top-bar">
+      <span class="topic-badge">Topic 1C &nbsp;·&nbsp; Theoretical Video</span>
+      <span class="timestamp-badge">0:00 – 10:00+</span>
+    </div>
+    <div class="hero-icon">🔐</div>
+    <h1 class="slide-title">
+      <span class="grad">Authentication</span> vs.<br/>
+      <span class="grad-r">Authorization</span>
+    </h1>
+    <p class="subtitle" style="font-size:1.3rem; margin-top:14px;">Role-Based Access Control (RBAC)</p>
+    <div class="meta-row">
+      <span class="pill pill-blue">ProjectPilot</span>
+      <span class="pill pill-purple">JWT</span>
+      <span class="pill pill-green">Express Middleware</span>
+      <span class="pill pill-red">Zero Trust</span>
+      <span class="pill pill-blue">Bengali 🇧🇩</span>
+    </div>
+    <div style="margin-top:36px; text-align:center;">
+      <div style="font-size:.82rem; color:var(--muted); line-height:2;">
+        <strong style="color:var(--text);">Candidate:</strong> Md. Asraf Uddin &nbsp;&nbsp;
+        <strong style="color:var(--text);">Duration:</strong> 10 – 11 min &nbsp;&nbsp;
+        <strong style="color:var(--text);">Date:</strong> October 21, 2026
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 2 — CORE CONCEPT -->
+  <section class="slide" id="slide-2">
+    <div class="top-bar">
+      <span class="topic-badge">Topic 1C — Core Concept</span>
+      <span class="timestamp-badge">⏱ 0:00 – 1:30</span>
+    </div>
+    <h2 class="slide-title">AuthN vs AuthZ — <span class="grad">What's the Difference?</span></h2>
+    <div class="grid2">
+      <div class="card" style="border-color:rgba(0,212,255,.3);">
+        <div class="card-icon">🛂</div>
+        <div class="card-title" style="color:var(--accent2); font-size:1.05rem;">Authentication (AuthN)</div>
+        <div style="font-size:.82rem; color:var(--muted); margin-bottom:10px; font-weight:600;">WHO ARE YOU?</div>
+        <div class="card-body">
+          Verifying the <strong style="color:var(--text);">identity</strong> of a user.<br/><br/>
+          ✈️ <em>Like the security officer checking your <strong style="color:var(--accent2);">passport</strong> at the airport gate.</em>
+        </div>
+        <div style="margin-top:14px;">
+          <span class="pill pill-blue">Login</span>
+          <span class="pill pill-blue">JWT Issued</span>
+          <span class="pill pill-blue">Password Check</span>
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(108,99,255,.3);">
+        <div class="card-icon">🎫</div>
+        <div class="card-title" style="color:var(--accent1); font-size:1.05rem;">Authorization (AuthZ)</div>
+        <div style="font-size:.82rem; color:var(--muted); margin-bottom:10px; font-weight:600;">WHAT CAN YOU DO?</div>
+        <div class="card-body">
+          Controlling what an identified user is <strong style="color:var(--text);">permitted</strong> to access.<br/><br/>
+          🪑 <em>Your <strong style="color:var(--accent1);">boarding pass</strong> allows Economy only — you cannot enter the cockpit.</em>
+        </div>
+        <div style="margin-top:14px;">
+          <span class="pill pill-purple">Role Check</span>
+          <span class="pill pill-purple">Resource Guard</span>
+          <span class="pill pill-purple">403 Forbidden</span>
+        </div>
+      </div>
+    </div>
+    <div class="bn-note">
+      🇧🇩 <strong>সহজ কথায়:</strong> Authentication হলো "আপনি কে?" নিশ্চিত করা। Authorization হলো "আপনি কী করতে পারবেন?" নির্ধারণ করা।
+      এই দুটো ধাপ <strong>সবসময় আলাদা</strong> এবং <strong>উভয়ই বাধ্যতামূলক</strong>।
+    </div>
+  </section>
+
+  <!-- SLIDE 3 — JWT FLOW -->
+  <section class="slide" id="slide-3">
+    <div class="top-bar">
+      <span class="topic-badge">Topic 1C — JWT Auth Flow</span>
+      <span class="timestamp-badge">⏱ 1:30 – 3:45</span>
+    </div>
+    <h2 class="slide-title">How <span class="grad">JWT Authentication</span> Works in ProjectPilot</h2>
+    <div class="flow">
+      <div class="flow-node" style="border-color:rgba(0,212,255,.3);">
+        <span class="fn-icon">💻</span><strong>Client</strong>
+        <span class="flow-label">email + password<br/>→ /api/auth/login</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node" style="border-color:rgba(108,99,255,.3);">
+        <span class="fn-icon">⚙️</span><strong>Server</strong>
+        <span class="flow-label">bcrypt compares<br/>hashed password</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node" style="border-color:rgba(0,229,160,.3);">
+        <span class="fn-icon">🗄️</span><strong>Database</strong>
+        <span class="flow-label">PostgreSQL via Prisma<br/>Returns user + role</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node" style="border-color:rgba(255,179,71,.3);">
+        <span class="fn-icon">🎟️</span><strong>JWT Token</strong>
+        <span class="flow-label">{ id, email, role }<br/>signed w/ JWT_SECRET</span>
+      </div>
+    </div>
+    <div class="code-block" style="margin-top:20px;">
+      <div class="code-title">📄 auth.controller.ts — Token Generation</div>
+      <span class="cm">// After bcrypt password verification...</span><br/>
+      <span class="kw">const</span> payload = { id: user.id, email: user.email, role: user.<span class="hl">role</span> };<br/>
+      <span class="kw">const</span> token = jwt.<span class="fn">sign</span>(payload, process.env.JWT_SECRET!, { expiresIn: <span class="str">'7d'</span> });<br/>
+      res.<span class="fn">json</span>({ token, role: user.<span class="hl">role</span> });
+    </div>
+    <div class="bn-note" style="margin-top:14px;">
+      🇧🇩 সার্ভার <strong>Stateless</strong> — প্রতিটি রিকোয়েস্টে ডাটাবেজ হিট না করেও JWT থেকে ইউজারের তথ্য পাওয়া যায়।
+      টোকেনের ভেতরে <strong>role</strong> এনকোড করা থাকে, যা পরবর্তী Authorization-এ ব্যবহৃত হয়।
+    </div>
+  </section>
+
+  <!-- SLIDE 4 — RBAC ROLES -->
+  <section class="slide" id="slide-4">
+    <div class="top-bar">
+      <span class="topic-badge">Topic 1C — RBAC Roles</span>
+      <span class="timestamp-badge">⏱ 3:45 – 6:00</span>
+    </div>
+    <h2 class="slide-title"><span class="grad-r">Role-Based Access Control</span> in ProjectPilot</h2>
+    <div class="grid2" style="margin-top:24px;">
+      <div class="card" style="border-color:rgba(0,212,255,.3);">
+        <div class="card-icon">🎓</div>
+        <div class="card-title" style="color:var(--accent2); font-size:1.1rem;">STUDENT Role</div>
+        <ul style="list-style:none; margin-top:12px; display:flex; flex-direction:column; gap:10px;">
+          <li style="font-size:.87rem; color:var(--muted);">✅ Submit new projects</li>
+          <li style="font-size:.87rem; color:var(--muted);">✅ View own submissions only</li>
+          <li style="font-size:.87rem; color:var(--muted);">✅ See status (PENDING / APPROVED / REJECTED)</li>
+          <li style="font-size:.87rem; color:var(--danger);">❌ Access mentor dashboard</li>
+          <li style="font-size:.87rem; color:var(--danger);">❌ Approve or reject submissions</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:rgba(108,99,255,.3);">
+        <div class="card-icon">👨‍🏫</div>
+        <div class="card-title" style="color:var(--accent1); font-size:1.1rem;">MENTOR Role</div>
+        <ul style="list-style:none; margin-top:12px; display:flex; flex-direction:column; gap:10px;">
+          <li style="font-size:.87rem; color:var(--muted);">✅ View ALL student submissions</li>
+          <li style="font-size:.87rem; color:var(--muted);">✅ Filter by status (server-side)</li>
+          <li style="font-size:.87rem; color:var(--muted);">✅ Approve or Reject any submission</li>
+          <li style="font-size:.87rem; color:var(--muted);">✅ View aggregated statistics</li>
+          <li style="font-size:.87rem; color:var(--danger);">❌ Cannot be created via public signup</li>
+        </ul>
+      </div>
+    </div>
+    <div class="code-block" style="margin-top:20px;">
+      <div class="code-title">📄 Route-level RBAC — Two Middleware Layers</div>
+      <span class="cm">// Layer 1: Authenticate (AuthN) — verifies JWT</span><br/>
+      <span class="cm">// Layer 2: Authorize  (AuthZ) — checks role</span><br/><br/>
+      router.<span class="fn">get</span>(<span class="str">'/submissions'</span>, <span class="hl">authenticateJWT</span>, <span class="hl">requireRole(<span class="str">'MENTOR'</span>)</span>, handler);<br/>
+      router.<span class="fn">post</span>(<span class="str">'/submit'</span>,      <span class="hl">authenticateJWT</span>, <span class="hl">requireRole(<span class="str">'STUDENT'</span>)</span>, handler);
+    </div>
+  </section>
+
+  <!-- SLIDE 5 — MIDDLEWARE CODE -->
+  <section class="slide" id="slide-5">
+    <div class="top-bar">
+      <span class="topic-badge">Topic 1C — Middleware</span>
+      <span class="timestamp-badge">⏱ 3:45 – 6:00</span>
+    </div>
+    <h2 class="slide-title">Middleware <span class="grad">Implementation</span></h2>
+    <p class="subtitle">server/src/middlewares/auth.ts</p>
+    <div class="code-block" style="margin-top:20px; max-width:900px; font-size:.76rem;">
+      <div class="code-title">📄 middlewares/auth.ts</div>
+      <span class="cm">// ── Middleware 1: AuthN ──────────────────────────────</span><br/>
+      <span class="kw">export const</span> <span class="fn hl">authenticateJWT</span> = (req, res, next) => {<br/>
+      &nbsp;&nbsp;<span class="kw">const</span> token = req.headers.authorization?.<span class="fn">split</span>(<span class="str">' '</span>)[1];<br/>
+      &nbsp;&nbsp;<span class="kw">if</span> (!token) <span class="kw">return</span> res.<span class="fn">status</span>(401).<span class="fn">json</span>({ message: <span class="str">'Unauthorized'</span> });<br/>
+      &nbsp;&nbsp;<span class="kw">const</span> decoded = jwt.<span class="fn">verify</span>(token, process.env.JWT_SECRET!);<br/>
+      &nbsp;&nbsp;req.user = decoded; <span class="cm">// { id, email, role }</span><br/>
+      &nbsp;&nbsp;<span class="fn">next</span>();<br/>
+      };<br/><br/>
+      <span class="cm">// ── Middleware 2: AuthZ ──────────────────────────────</span><br/>
+      <span class="kw">export const</span> <span class="fn hl">requireRole</span> = (role: <span class="str">'STUDENT'</span> | <span class="str">'MENTOR'</span>) => (req, res, next) => {<br/>
+      &nbsp;&nbsp;<span class="kw">if</span> (req.user?.role !== role) {<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> res.<span class="fn">status</span>(<span class="hl">403</span>).<span class="fn">json</span>({ message: <span class="str">'Forbidden: Insufficient role'</span> });<br/>
+      &nbsp;&nbsp;}<br/>
+      &nbsp;&nbsp;<span class="fn">next</span>();<br/>
+      };
+    </div>
+    <div class="bn-note" style="margin-top:14px; font-size:.85rem;">
+      🇧🇩 <strong>authenticateJWT</strong> → Bearer Token ডিকোড করে — ইউজার লগইন করা কিনা নিশ্চিত করে (AuthN)।<br/>
+      <strong>requireRole('MENTOR')</strong> → টোকেনের ভেতরের role চেক করে — স্টুডেন্ট হলে সাথে সাথে <strong>403 Forbidden</strong> (AuthZ)।
+    </div>
+  </section>
+
+  <!-- SLIDE 6 — FRONTEND NOT ENOUGH -->
+  <section class="slide" id="slide-6">
+    <div class="top-bar">
+      <span class="topic-badge">Topic 1C — Architecture Lesson</span>
+      <span class="timestamp-badge">⏱ 6:00 – 8:15</span>
+    </div>
+    <h2 class="slide-title">⚠️ Frontend Guards Are <span class="grad-r">NOT Enough!</span></h2>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:22px; width:100%; max-width:960px; margin-top:22px;">
+      <div class="warn-box">
+        <div class="wt">❌ Wrong (Junior Dev Mistake)</div>
+        <div class="code-block" style="margin-top:10px; padding:14px 18px; font-size:.76rem;">
+          <span class="cm">// Next.js — only blocks UI nav</span><br/>
+          <span class="kw">if</span> (user.role !== <span class="str">'MENTOR'</span>)<br/>
+          &nbsp;&nbsp;router.<span class="fn">push</span>(<span class="str">'/login'</span>);
+        </div>
+        <p style="font-size:.82rem; color:var(--muted); margin-top:12px; line-height:1.6;">
+          Attacker <strong style="color:var(--danger);">never uses your UI</strong>. They hit the API directly with
+          <strong style="color:var(--danger);">Postman / cURL</strong>.
+        </p>
+      </div>
+      <div class="success-box">
+        <div class="st">✅ Correct (Server-side Guard)</div>
+        <div class="code-block" style="margin-top:10px; padding:14px 18px; font-size:.76rem;">
+          <span class="cm">// Express — enforced at API level</span><br/>
+          router.<span class="fn">get</span>(<span class="str">'/mentor/submissions'</span>,<br/>
+          &nbsp;&nbsp;authenticateJWT,<br/>
+          &nbsp;&nbsp;requireRole(<span class="str">'MENTOR'</span>),<br/>
+          &nbsp;&nbsp;mentorController.<span class="fn">getSubmissions</span>);
+        </div>
+        <p style="font-size:.82rem; color:var(--muted); margin-top:12px; line-height:1.6;">
+          <strong style="color:var(--success);">Security boundary lives on the server</strong>. Only the verified JWT payload is trusted.
+        </p>
+      </div>
+    </div>
+    <ul class="bullet-list" style="max-width:960px; flex-direction:row; gap:12px; margin-top:16px;">
+      <li style="flex:1; min-width:180px; font-size:.83rem;">
+        <span class="bi">🖥️</span>
+        <div><strong>Frontend Guard</strong><br/><span style="color:var(--muted);">UX only — prevents accidental nav</span></div>
+      </li>
+      <li style="flex:1; min-width:180px; font-size:.83rem;">
+        <span class="bi">🔒</span>
+        <div><strong>Backend Middleware</strong><br/><span style="color:var(--muted);">Real security — always enforced</span></div>
+      </li>
+      <li style="flex:1; min-width:180px; font-size:.83rem;">
+        <span class="bi">🎟️</span>
+        <div><strong>JWT Payload</strong><br/><span style="color:var(--muted);">Server never trusts client-sent role</span></div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- SLIDE 7 — SUMMARY -->
+  <section class="slide" id="slide-7">
+    <div class="top-bar">
+      <span class="topic-badge">Topic 1C — Summary</span>
+      <span class="timestamp-badge">⏱ 8:15 – 10:00</span>
+    </div>
+    <h2 class="slide-title">Summary &amp; <span class="grad">Zero Trust Principles</span></h2>
+    <div class="summary-grid">
+      <div class="sum-card" style="border-color:rgba(0,212,255,.3);">
+        <div class="sum-icon">🛂</div>
+        <div class="sum-label">Authentication</div>
+        <div class="sum-val">Identity verification<br/>Login + JWT Issued<br/><span class="pill pill-blue" style="margin-top:6px;">Who are you?</span></div>
+      </div>
+      <div class="sum-card" style="border-color:rgba(108,99,255,.3);">
+        <div class="sum-icon">🎫</div>
+        <div class="sum-label">Authorization (RBAC)</div>
+        <div class="sum-val">Role-based resource access<br/>Middleware Guard<br/><span class="pill pill-purple" style="margin-top:6px;">What can you do?</span></div>
+      </div>
+      <div class="sum-card" style="border-color:rgba(255,77,109,.3);">
+        <div class="sum-icon">🚫</div>
+        <div class="sum-label">Zero Trust</div>
+        <div class="sum-val">Never trust client-sent role<br/>Only verified JWT payload<br/><span class="pill pill-red" style="margin-top:6px;">Server decides</span></div>
+      </div>
+    </div>
+    <table class="compare-table" style="margin-top:22px;">
+      <thead>
+        <tr><th>Aspect</th><th>Authentication (AuthN)</th><th>Authorization (AuthZ)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Question</td><td><span class="tag tag-authn">Who are you?</span></td><td><span class="tag tag-authz">What can you do?</span></td></tr>
+        <tr><td>Mechanism</td><td>JWT issued on login</td><td>Role checked via middleware</td></tr>
+        <tr><td>Failure Response</td><td>401 Unauthorized</td><td>403 Forbidden</td></tr>
+        <tr><td>Happens</td><td>Once (login)</td><td>Every protected request</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- SLIDE 8 — VIVA Q&A -->
+  <section class="slide" id="slide-8">
+    <div class="top-bar">
+      <span class="topic-badge">Topic 1C — Viva Defense</span>
+      <span class="timestamp-badge">⏱ 8:15 – 10:00</span>
+    </div>
+    <h2 class="slide-title">🎤 Viva <span class="grad">Q&amp;A</span> Defense</h2>
+    <ul class="bullet-list" style="max-width:900px; margin-top:20px;">
+      <li>
+        <span class="bi">❓</span>
+        <div>
+          <strong>"JWT টোকেন যদি কেউ চুরি করে?"</strong>
+          <div style="font-size:.83rem; color:var(--muted); margin-top:6px; line-height:1.6;">
+            ✅ Use <strong style="color:var(--text);">short-lived tokens</strong> · Force <strong style="color:var(--text);">HTTPS</strong> · Prefer <strong style="color:var(--text);">HttpOnly Secure Cookie</strong> over localStorage in production.
+          </div>
+        </div>
+      </li>
+      <li>
+        <span class="bi">❓</span>
+        <div>
+          <strong>"কেন ফ্রন্টএন্ডে রোল চেক করলেই হয় না?"</strong>
+          <div style="font-size:.83rem; color:var(--muted); margin-top:6px; line-height:1.6;">
+            ✅ Attackers bypass UI via Postman/cURL. <strong style="color:var(--text);">Only reliable security boundary is the server</strong>.
+          </div>
+        </div>
+      </li>
+      <li>
+        <span class="bi">❓</span>
+        <div>
+          <strong>"JWT vs Session — কোনটি ভালো?"</strong>
+          <div style="font-size:.83rem; color:var(--muted); margin-top:6px; line-height:1.6;">
+            ✅ JWT = <strong style="color:var(--text);">stateless</strong>, scales well, no DB per request. Sessions = <strong style="color:var(--text);">stateful</strong>, easier revocation. Depends on architecture.
+          </div>
+        </div>
+      </li>
+      <li>
+        <span class="bi">❓</span>
+        <div>
+          <strong>"RBAC আর ABAC-এর পার্থক্য কী?"</strong>
+          <div style="font-size:.83rem; color:var(--muted); margin-top:6px; line-height:1.6;">
+            ✅ <strong style="color:var(--text);">RBAC</strong> = access by Role. <strong style="color:var(--text);">ABAC</strong> = access by Attributes (time, IP, owner, etc.) — more granular.
+          </div>
+        </div>
+      </li>
+    </ul>
+    <div style="text-align:center; margin-top:24px; font-size:1.5rem; animation: float 4s ease-in-out infinite;">
+      🙏 ধন্যবাদ &nbsp;|&nbsp; Thank You
+    </div>
+  </section>
+
+</div>
+
+<!-- Nav Controls -->
+<div id="controls">
+  <button class="nav-btn" id="btn-prev" title="Previous (←)">‹</button>
+  <div id="slide-counter">1 / 8</div>
+  <button class="nav-btn" id="btn-next" title="Next (→)">›</button>
+</div>
+
+<div id="progress-bar"></div>
+<div id="dots"></div>
+
+<script>
+  // Stars
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${(Math.random()*4+2).toFixed(1)}s;animation-delay:${(Math.random()*5).toFixed(1)}s;opacity:${(Math.random()*0.4+0.1).toFixed(2)};`;
+    starsEl.appendChild(s);
+  }
+
+  // Slides
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total  = slides.length;
+  let current  = 0;
+
+  const counter  = document.getElementById('slide-counter');
+  const btnPrev  = document.getElementById('btn-prev');
+  const btnNext  = document.getElementById('btn-next');
+  const progress = document.getElementById('progress-bar');
+  const dotsEl   = document.getElementById('dots');
+
+  slides.forEach((_,i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i===0?' active':'');
+    d.title = `Slide ${i+1}`;
+    d.addEventListener('click', () => goTo(i));
+    dotsEl.appendChild(d);
+  });
+
+  function goTo(idx) {
+    if (idx < 0 || idx >= total) return;
+    slides[current].classList.remove('active');
+    slides[current].classList.add('exit-left');
+    setTimeout(() => slides[current > idx ? current : current].classList.remove('exit-left'), 600);
+    current = idx;
+    slides[current].classList.add('active');
+    counter.textContent = `${current+1} / ${total}`;
+    btnPrev.disabled = current === 0;
+    btnNext.disabled = current === total-1;
+    progress.style.width = `${((current+1)/total)*100}%`;
+    document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===current));
+  }
+
+  slides[0].classList.add('active');
+  btnPrev.disabled = true;
+  progress.style.width = `${(1/total)*100}%`;
+
+  btnNext.addEventListener('click', () => goTo(current+1));
+  btnPrev.addEventListener('click', () => goTo(current-1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' ') goTo(current+1);
+    if (e.key==='ArrowLeft' ||e.key==='ArrowUp')                 goTo(current-1);
+  });
+</script>
+</body>
+</html>

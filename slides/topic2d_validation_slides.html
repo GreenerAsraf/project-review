@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Topic 2D — Defensive Form Validation | ProjectPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #080f18;
+      --surface: rgba(255,255,255,0.04);
+      --border:  rgba(255,255,255,0.09);
+      --a1:      #00e5a0;   /* emerald */
+      --a2:      #00cfff;   /* cyan */
+      --a3:      #ffd166;   /* amber */
+      --danger:  #ff5a6e;
+      --purple:  #b48aff;
+      --text:    #e4ecf4;
+      --muted:   #7a8899;
+      --card:    rgba(255,255,255,0.05);
+    }
+
+    html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; }
+
+    /* ── Stars ── */
+    #stars { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+    .star  { position:absolute; border-radius:50%; background:#fff; animation:twinkle var(--d,3s) ease-in-out infinite alternate; }
+    @keyframes twinkle { from{opacity:.08;} to{opacity:.65;} }
+
+    /* ── Deck ── */
+    #deck { position:fixed; inset:0; z-index:1; }
+    .slide {
+      position:absolute; inset:0;
+      display:flex; flex-direction:column;
+      justify-content:center; align-items:center;
+      padding:52px 64px;
+      opacity:0; pointer-events:none;
+      transition:opacity .5s ease, transform .5s ease;
+      transform:translateX(60px);
+    }
+    .slide.active   { opacity:1; pointer-events:all; transform:translateX(0); }
+    .slide.exit-out { opacity:0; transform:translateX(-60px); }
+
+    /* ── Top bar ── */
+    .top-bar { position:absolute; top:20px; left:0; right:0; display:flex; align-items:center; justify-content:space-between; padding:0 52px; }
+    .topic-badge {
+      font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+      background:linear-gradient(90deg,var(--a1),var(--a2));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .ts-badge {
+      font-size:11px; font-weight:600; color:var(--muted);
+      background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:4px 14px;
+    }
+
+    /* ── Controls ── */
+    #controls { position:fixed; bottom:26px; left:50%; transform:translateX(-50%); z-index:100; display:flex; align-items:center; gap:16px; }
+    .nav-btn {
+      width:44px; height:44px; border-radius:50%;
+      border:1px solid var(--border); background:var(--card); color:var(--text);
+      font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:all .2s; backdrop-filter:blur(12px);
+    }
+    .nav-btn:hover { background:var(--a1); border-color:var(--a1); color:#000; transform:scale(1.12); }
+    .nav-btn:disabled { opacity:.3; cursor:not-allowed; }
+    #slide-counter { font-size:13px; font-weight:600; color:var(--muted); background:var(--card); border:1px solid var(--border); border-radius:20px; padding:6px 18px; backdrop-filter:blur(12px); }
+
+    /* ── Progress ── */
+    #progress-bar { position:fixed; bottom:0; left:0; height:3px; background:linear-gradient(90deg,var(--a1),var(--a2)); transition:width .4s ease; z-index:200; }
+
+    /* ── Dots ── */
+    #dots { position:fixed; right:26px; top:50%; transform:translateY(-50%); z-index:100; display:flex; flex-direction:column; gap:10px; }
+    .dot { width:8px; height:8px; border-radius:50%; background:var(--border); cursor:pointer; transition:all .2s; }
+    .dot.active { background:var(--a1); transform:scale(1.5); }
+    .dot:hover  { background:var(--a2); }
+
+    /* ── Typography ── */
+    h1.st { font-size:clamp(2.2rem,5vw,3.8rem); font-weight:900; line-height:1.1; text-align:center; }
+    h2.st { font-size:clamp(1.7rem,3.2vw,2.6rem); font-weight:800; line-height:1.15; text-align:center; margin-bottom:4px; }
+    .sub  { font-size:clamp(.85rem,1.5vw,1.1rem); color:var(--muted); text-align:center; margin-top:8px; }
+
+    .grad  { background:linear-gradient(135deg,var(--a1),var(--a2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .grad2 { background:linear-gradient(135deg,var(--a3),var(--danger)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .grad3 { background:linear-gradient(135deg,var(--purple),var(--a2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    /* ── Cards ── */
+    .card {
+      background:var(--card); border:1px solid var(--border); border-radius:20px;
+      padding:26px 22px; backdrop-filter:blur(16px);
+      transition:transform .25s, box-shadow .25s;
+    }
+    .card:hover { transform:translateY(-4px); box-shadow:0 12px 40px rgba(0,229,160,.15); }
+
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:22px; width:100%; max-width:980px; margin-top:26px; }
+    .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; width:100%; max-width:980px; margin-top:26px; }
+
+    /* ── Code block ── */
+    .code-wrap { width:100%; max-width:900px; margin-top:20px; }
+    .code-label { font-size:.72rem; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+    .code-block {
+      background:rgba(0,0,0,.6); border:1px solid var(--border); border-radius:14px;
+      padding:18px 22px; font-family:'Fira Code',monospace; font-size:.77rem;
+      line-height:1.8; overflow-x:auto; text-align:left; backdrop-filter:blur(16px);
+    }
+    .kw  { color:#c792ea; }
+    .fn  { color:#82aaff; }
+    .str { color:#c3e88d; }
+    .cm  { color:#4a6070; font-style:italic; }
+    .hl  { background:rgba(0,229,160,.18); border-radius:4px; padding:0 3px; }
+    .hl2 { background:rgba(255,90,110,.18); border-radius:4px; padding:0 3px; }
+    .hl3 { background:rgba(255,209,102,.15); border-radius:4px; padding:0 3px; }
+    .ty  { color:#ffb347; }
+
+    /* ── Bengali note ── */
+    .bn-note {
+      font-family:'Hind Siliguri',sans-serif;
+      font-size:.9rem; color:var(--muted);
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:12px; padding:14px 20px;
+      margin-top:16px; width:100%; max-width:900px;
+      line-height:1.95; text-align:left;
+    }
+    .bn-note strong { color:var(--text); }
+
+    /* ── Pill ── */
+    .pill { display:inline-block; font-size:.7rem; font-weight:700; padding:4px 12px; border-radius:20px; margin:2px; }
+    .p-g  { background:rgba(0,229,160,.14); color:var(--a1); }
+    .p-c  { background:rgba(0,207,255,.14); color:var(--a2); }
+    .p-a  { background:rgba(255,209,102,.14); color:var(--a3); }
+    .p-r  { background:rgba(255,90,110,.14); color:var(--danger); }
+    .p-p  { background:rgba(180,138,255,.14); color:var(--purple); }
+
+    /* ── Layer cards ── */
+    .layer-card {
+      background:var(--card); border:1px solid var(--border); border-radius:16px;
+      padding:20px; display:flex; align-items:flex-start; gap:16px;
+      backdrop-filter:blur(12px);
+    }
+    .layer-num {
+      flex:0 0 38px; height:38px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:1rem; font-weight:900;
+    }
+    .layer-body .layer-title { font-size:.95rem; font-weight:700; margin-bottom:4px; }
+    .layer-body .layer-desc  { font-size:.83rem; color:var(--muted); line-height:1.6; }
+
+    /* ── Step flow ── */
+    .step-flow { display:flex; flex-direction:column; gap:12px; width:100%; max-width:860px; margin-top:20px; }
+    .step-row  { display:flex; align-items:flex-start; gap:14px; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px 18px; }
+    .step-num  { flex:0 0 30px; height:30px; border-radius:50%; background:linear-gradient(135deg,var(--a1),var(--a2)); color:#000; font-size:.8rem; font-weight:900; display:flex; align-items:center; justify-content:center; }
+    .step-content .step-title { font-size:.9rem; font-weight:700; margin-bottom:3px; }
+    .step-content .step-desc  { font-size:.82rem; color:var(--muted); line-height:1.55; }
+
+    /* ── Comparison cols ── */
+    .cmp-col { border-radius:18px; padding:22px 20px; }
+    .cmp-ok  { background:rgba(0,229,160,.06); border:1px solid rgba(0,229,160,.25); }
+    .cmp-bad { background:rgba(255,90,110,.06); border:1px solid rgba(255,90,110,.25); }
+    .cmp-hd  { font-size:.9rem; font-weight:700; margin-bottom:12px; }
+
+    /* ── Hero ── */
+    .hero-icon { font-size:4rem; margin-bottom:18px; animation:float 4s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
+    .meta-row  { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:22px; }
+
+    /* ── URL norm table ── */
+    .norm-table { width:100%; max-width:860px; border-collapse:separate; border-spacing:0; margin-top:18px; }
+    .norm-table th,.norm-table td { padding:11px 18px; text-align:left; border-bottom:1px solid var(--border); font-size:.84rem; }
+    .norm-table th { font-size:.74rem; letter-spacing:1.3px; text-transform:uppercase; color:var(--muted); }
+    .norm-table thead { background:rgba(0,229,160,.10); }
+    .norm-table tbody tr { background:var(--card); }
+    .norm-table tbody tr:hover { background:rgba(255,255,255,.05); }
+    .strike { text-decoration:line-through; color:var(--danger); }
+    .ok     { color:var(--a1); font-weight:600; }
+
+    /* ── Demo steps ── */
+    .demo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; width:100%; max-width:980px; margin-top:26px; }
+    .demo-card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:22px 18px; text-align:center; backdrop-filter:blur(12px); }
+    .demo-card .demo-icon { font-size:2rem; margin-bottom:10px; }
+    .demo-card .demo-step { font-size:.7rem; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+    .demo-card .demo-title { font-size:.95rem; font-weight:700; margin-bottom:6px; }
+    .demo-card .demo-desc  { font-size:.8rem; color:var(--muted); line-height:1.6; }
+
+    /* ── Summary grid ── */
+    .sum-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; width:100%; max-width:980px; margin-top:24px; }
+    .sum-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px 14px; text-align:center; backdrop-filter:blur(12px); }
+    .sum-icon { font-size:1.8rem; margin-bottom:8px; }
+    .sum-label { font-size:.7rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+    .sum-val   { font-size:.82rem; line-height:1.55; }
+  </style>
+</head>
+<body>
+
+<div id="stars"></div>
+<div id="deck">
+
+  <!-- ═══════════════════════════════════
+       SLIDE 1 — TITLE
+  ═══════════════════════════════════ -->
+  <section class="slide" id="slide-1">
+    <div class="top-bar">
+      <span class="topic-badge">Topic 2D &nbsp;·&nbsp; Hands-on Coding</span>
+      <span class="ts-badge">0:00 – 11:30</span>
+    </div>
+
+    <div class="hero-icon">🛡️</div>
+    <h1 class="st">
+      <span class="grad">Defensive</span><br/>
+      <span class="grad2">Form Validation</span>
+    </h1>
+    <p class="sub" style="font-size:1.2rem; margin-top:12px;">Zod · Duplicate Prevention · UI Feedback</p>
+
+    <div class="meta-row">
+      <span class="pill p-g">Zod Schema</span>
+      <span class="pill p-c">URL Normalization</span>
+      <span class="pill p-a">Prisma Unique</span>
+      <span class="pill p-r">Race Condition Fix</span>
+      <span class="pill p-p">3-Layer Defence</span>
+      <span class="pill p-c">Bengali 🇧🇩</span>
+    </div>
+
+    <div style="margin-top:34px; text-align:center; font-size:.82rem; color:var(--muted); line-height:2.2;">
+      <strong style="color:var(--text);">Candidate:</strong> Md. Asraf Uddin &nbsp;&nbsp;
+      <strong style="color:var(--text);">Duration:</strong> 10 – 11 min &nbsp;&nbsp;
+      <strong style="color:var(--text);">Stack:</strong> Next.js + Express + Prisma + Zod
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       SLIDE 2 — WHAT IS DEFENSIVE VALIDATION?
+  ═══════════════════════════════════ -->
+  <section class="slide" id="slide-2">
+    <div class="top-bar">
+      <span class="topic-badge">Topic 2D — Introduction</span>
+      <span class="ts-badge">⏱ 0:00 – 1:30</span>
+    </div>
+
+    <h2 class="st">What is <span class="grad">"Defensive Validation"</span>?</h2>
+
+    <div style="width:100%; max-width:900px; margin-top:24px; display:flex; flex-direction:column; gap:14px;">
+      <div class="layer-card" style="border-color:rgba(0,229,160,.3);">
+        <div class="layer-num" style="background:linear-gradient(135deg,var(--a1),var(--a2)); color:#000;">1</div>
+        <div class="layer-body">
+          <div class="layer-title" style="color:var(--a1);">Client-Side Validation <span class="pill p-c" style="margin-left:6px;">Zod · React</span></div>
+          <div class="layer-desc">Instant UI feedback before the request even leaves the browser. Improves <strong style="color:var(--text);">user experience</strong> — catches typos immediately.</div>
+        </div>
+      </div>
+      <div class="layer-card" style="border-color:rgba(0,207,255,.3);">
+        <div class="layer-num" style="background:linear-gradient(135deg,var(--a2),var(--purple)); color:#000;">2</div>
+        <div class="layer-body">
+          <div class="layer-title" style="color:var(--a2);">Server-Side Validation <span class="pill p-p" style="margin-left:6px;">Zod · Express</span></div>
+          <div class="layer-desc">The <strong style="color:var(--text);">only reliable filter</strong>. Anyone can bypass the frontend using Postman, cURL, or scripts. The server must validate independently.</div>
+        </div>
+      </div>
+      <div class="layer-card" style="border-color:rgba(255,209,102,.3);">
+        <div class="layer-num" style="background:linear-gradient(135deg,var(--a3),var(--danger)); color:#000;">3</div>
+        <div class="layer-body">
+          <div class="layer-title" style="color:var(--a3);">Database Constraint <span class="pill p-a" style="margin-left:6px;">Prisma · PostgreSQL</span></div>
+          <div class="layer-desc">The <strong style="color:var(--text);">final safety net</strong>. A database-level unique constraint catches race conditions that even server code cannot reliably prevent alone.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bn-note">
+      🇧🇩 <strong>ডিফেন্সিভ ভ্যালিডেশন</strong> মানে — আমরা ধরে নেব যে যেকেউ যেকোনো সময় ভুল বা ক্ষতিকর ডাটা পাঠাতে পারে।
+      তাই আমরা <strong>৩টি আলাদা স্তরে</strong> নিরাপত্তা প্রাচীর তৈরি করব।
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       SLIDE 3 — FRONTEND ZOD SCHEMA
+  ═══════════════════════════════════ -->
+  <section class="slide" id="slide-3">
+    <div class="top-bar">
+      <span class="topic-badge">Topic 2D — Client Validation</span>
+      <span class="ts-badge">⏱ 1:30 – 4:00</span>
+    </div>
+
+    <h2 class="st">Layer 1: <span class="grad">Frontend Zod Schema</span></h2>
+    <p class="sub">client/app/student/page.tsx</p>
+
+    <div class="code-wrap">
+      <div class="code-label">📄 submissionSchema — client-side (Zod)</div>
+      <div class="code-block">
+<span class="kw">import</span> { z } <span class="kw">from</span> <span class="str">'zod'</span>;<br/><br/>
+<span class="kw">const</span> submissionSchema = z.<span class="fn">object</span>({<br/>
+&nbsp;&nbsp;projectName: z.<span class="fn">string</span>().<span class="hl fn">min</span>(<span class="str">3</span>, <span class="str">'Min 3 characters required'</span>),<br/>
+&nbsp;&nbsp;repoUrl:     z.<span class="fn">string</span>().<span class="hl fn">url</span>(<span class="str">'Must be a valid GitHub URL'</span>),<br/>
+&nbsp;&nbsp;liveUrl:     z.<span class="fn">string</span>().<span class="fn">url</span>().<span class="hl fn">optional</span>().<span class="fn">or</span>(z.<span class="fn">literal</span>(<span class="str">''</span>)),<br/>
+&nbsp;&nbsp;description: z.<span class="fn">string</span>().<span class="hl fn">min</span>(<span class="str">10</span>, <span class="str">'Min 10 characters required'</span>),<br/>
+});<br/><br/>
+<span class="cm">// On form submit:</span><br/>
+<span class="kw">const</span> result = submissionSchema.<span class="fn hl">safeParse</span>(formData);<br/>
+<span class="kw">if</span> (!result.success) {<br/>
+&nbsp;&nbsp;<span class="cm">// Set field-level errors → red messages below each input</span><br/>
+&nbsp;&nbsp;<span class="fn">setErrors</span>(result.error.<span class="fn">flatten</span>().fieldErrors);<br/>
+&nbsp;&nbsp;<span class="kw">return</span>; <span class="cm">// ← never hits the API</span><br/>
+}
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px; width:100%; max-width:900px; margin-top:18px;">
+      <div class="card" style="border-color:rgba(0,229,160,.25); text-align:center; padding:16px 12px;">
+        <div style="font-size:1.4rem; margin-bottom:6px;">📝</div>
+        <div style="font-size:.78rem; font-weight:700; color:var(--a1);">projectName</div>
+        <div style="font-size:.73rem; color:var(--muted); margin-top:4px;">min 3 chars</div>
+      </div>
+      <div class="card" style="border-color:rgba(0,207,255,.25); text-align:center; padding:16px 12px;">
+        <div style="font-size:1.4rem; margin-bottom:6px;">🔗</div>
+        <div style="font-size:.78rem; font-weight:700; color:var(--a2);">repoUrl</div>
+        <div style="font-size:.73rem; color:var(--muted); margin-top:4px;">valid URL · required</div>
+      </div>
+      <div class="card" style="border-color:rgba(255,209,102,.25); text-align:center; padding:16px 12px;">
+        <div style="font-size:1.4rem; margin-bottom:6px;">🌐</div>
+        <div style="font-size:.78rem; font-weight:700; color:var(--a3);">liveUrl</div>
+        <div style="font-size:.73rem; color:var(--muted); margin-top:4px;">valid URL · optional</div>
+      </div>
+      <div class="card" style="border-color:rgba(180,138,255,.25); text-align:center; padding:16px 12px;">
+        <div style="font-size:1.4rem; margin-bottom:6px;">📋</div>
+        <div style="font-size:.78rem; font-weight:700; color:var(--purple);">description</div>
+        <div style="font-size:.73rem; color:var(--muted); margin-top:4px;">min 10 chars</div>
+      </div>
+    </div>
+
+    <div class="bn-note" style="margin-top:14px; font-size:.85rem;">
+      🇧🇩 <strong>safeParse()</strong> রান হলে ভুল ফিল্ডে লাল মেসেজ দেখায় — সার্ভারে রিকোয়েস্ট যাওয়ার আগেই ইউজার তার ভুল সংশোধন করতে পারে।
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       SLIDE 4 — BACKEND VALIDATION
+  ═══════════════════════════════════ -->
+  <section class="slide" id="slide-4">
+    <div class="top-bar">
+      <span class="topic-badge">Topic 2D — Server Validation</span>
+      <span class="ts-badge">⏱ 4:00 – 6:30</span>
+    </div>
+
+    <h2 class="st">Layer 2: <span class="grad3">Backend Zod Validation</span></h2>
+    <p class="sub">server/src/schemas/index.ts</p>
+
+    <div class="grid2" style="margin-top:20px; align-items:start;">
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="cmp-bad">
+          <div class="cmp-hd" style="color:var(--danger);">❌ Why not just frontend?</div>
+          <p style="font-size:.84rem; color:var(--muted); line-height:1.7;">
+            Anyone can open <strong style="color:var(--text);">DevTools</strong>, disable JS, or use <strong style="color:var(--text);">Postman / cURL</strong> to bypass the React form entirely and send raw JSON to <code style="color:var(--a2); font-family:'Fira Code',monospace;">/api/submissions</code> with malformed or malicious data.
+          </p>
+        </div>
+        <div class="cmp-ok">
+          <div class="cmp-hd" style="color:var(--a1);">✅ Server is the only truth</div>
+          <p style="font-size:.84rem; color:var(--muted); line-height:1.7;">
+            The server <strong style="color:var(--text);">never trusts the client</strong>. Even if the frontend sends garbage, the backend Zod schema rejects it before it can touch the database.
+          </p>
+        </div>
+      </div>
+
+      <div class="code-wrap" style="margin-top:0;">
+        <div class="code-label">📄 schemas/index.ts — createSubmissionSchema</div>
+        <div class="code-block" style="font-size:.74rem;">
+<span class="kw">export const</span> createSubmissionSchema = z.<span class="fn">object</span>({<br/>
+&nbsp;&nbsp;projectName: z.<span class="fn">string</span>().<span class="fn">min</span>(3).<span class="fn">max</span>(100),<br/>
+&nbsp;&nbsp;repoUrl: z.<span class="fn">string</span>().<span class="hl fn">url</span>()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="hl fn">refine</span>(url =&gt; !url.<span class="fn">startsWith</span>(<span class="str">'javascript:'</span>), {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message: <span class="str">'Invalid protocol'</span> <span class="cm">// XSS block</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}),<br/>
+&nbsp;&nbsp;liveUrl: z.<span class="fn">string</span>().<span class="fn">url</span>().<span class="fn">optional</span>().<span class="fn">nullable</span>(),<br/>
+&nbsp;&nbsp;description: z.<span class="fn">string</span>().<span class="fn">min</span>(10).<span class="fn">max</span>(1000),<br/>
+});<br/><br/>
+<span class="cm">// In controller:</span><br/>
+<span class="kw">const</span> parsed = createSubmissionSchema.<span class="fn hl">safeParse</span>(req.body);<br/>
+<span class="kw">if</span> (!parsed.success)<br/>
+&nbsp;&nbsp;<span class="kw">return</span> res.<span class="fn">status</span>(<span class="hl2">400</span>).<span class="fn">json</span>({ errors: parsed.error.flatten() });
+        </div>
+      </div>
+    </div>
+
+    <div class="bn-note" style="margin-top:14px; font-size:.85rem;">
+      🇧🇩 ব্যাকএন্ড <strong>z.string().url()</strong> দিয়ে URL ভ্যালিড করে এবং <strong>javascript: প্রোটোকল</strong> ব্লক করে XSS আক্রমণ প্রতিরোধ করে।
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       SLIDE 5 — URL NORMALIZATION
+  ═══════════════════════════════════ -->
+  <section class="slide" id="slide-5">
+    <div class="top-bar">
+      <span class="topic-badge">Topic 2D — URL Normalization</span>
+      <span class="ts-badge">⏱ 4:00 – 6:30</span>
+    </div>
+
+    <h2 class="st">The Smart Part: <span class="grad">URL Normalization</span></h2>
+    <p class="sub">submission.controller.ts — before DB write</p>
+
+    <table class="norm-table">
+      <thead>
+        <tr><th>User submits</th><th>After normalization</th><th>Result</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code style="color:var(--a2); font-family:'Fira Code',monospace;">https://github.com/user/project/</code></td>
+          <td><code style="color:var(--a1); font-family:'Fira Code',monospace;">https://github.com/user/project</code></td>
+          <td><span style="color:var(--a1);">✅ Trailing slash removed</span></td>
+        </tr>
+        <tr>
+          <td><code style="color:var(--a2); font-family:'Fira Code',monospace;">https://github.com/user/project.git</code></td>
+          <td><code style="color:var(--a1); font-family:'Fira Code',monospace;">https://github.com/user/project</code></td>
+          <td><span style="color:var(--a1);">✅ .git stripped</span></td>
+        </tr>
+        <tr>
+          <td><code style="color:var(--a2); font-family:'Fira Code',monospace;">HTTPS://GITHUB.COM/User/Project</code></td>
+          <td><code style="color:var(--a1); font-family:'Fira Code',monospace;">https://github.com/user/project</code></td>
+          <td><span style="color:var(--a1);">✅ Lowercased</span></td>
+        </tr>
+        <tr>
+          <td><code style="color:var(--a2); font-family:'Fira Code',monospace;">&nbsp;&nbsp;https://github.com/user/project  </code></td>
+          <td><code style="color:var(--a1); font-family:'Fira Code',monospace;">https://github.com/user/project</code></td>
+          <td><span style="color:var(--a1);">✅ Whitespace trimmed</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="code-wrap" style="margin-top:18px;">
+      <div class="code-label">📄 submission.controller.ts — normalize function</div>
+      <div class="code-block" style="font-size:.76rem;">
+<span class="kw">function</span> <span class="fn hl">normalizeUrl</span>(url: <span class="ty">string</span>): <span class="ty">string</span> {<br/>
+&nbsp;&nbsp;<span class="kw">return</span> url<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">trim</span>()                          <span class="cm">// remove spaces</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">toLowerCase</span>()                   <span class="cm">// case-insensitive</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">replace</span>(<span class="str">/\.git$/</span>, <span class="str">''</span>)         <span class="cm">// strip .git</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">replace</span>(<span class="str">/\/+$/</span>, <span class="str">''</span>);          <span class="cm">// strip trailing slash</span><br/>
+}<br/>
+<span class="kw">const</span> normalizedRepo = <span class="fn">normalizeUrl</span>(parsed.data.repoUrl);
+      </div>
+    </div>
+
+    <div class="bn-note" style="font-size:.84rem;">
+      🇧🇩 একই রিপোজিটরি ৪টি আলাদা ফরম্যাটে আসতে পারে — normalize না করলে সবগুলো আলাদা এন্ট্রি হিসেবে ডাটাবেজে ঢুকে যাবে।
+      <strong>Normalization</strong> নিশ্চিত করে একই রিপো সবসময় একই key-তে store হয়।
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       SLIDE 6 — DATABASE CONSTRAINT
+  ═══════════════════════════════════ -->
+  <section class="slide" id="slide-6">
+    <div class="top-bar">
+      <span class="topic-badge">Topic 2D — Database Layer</span>
+      <span class="ts-badge">⏱ 6:30 – 8:30</span>
+    </div>
+
+    <h2 class="st">Layer 3: <span class="grad2">Database-Level Protection</span></h2>
+    <p class="sub">server/prisma/schema.prisma · Race Condition Defence</p>
+
+    <div class="grid2" style="margin-top:20px; align-items:start;">
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="code-wrap" style="margin-top:0;">
+          <div class="code-label">📄 schema.prisma — compound unique</div>
+          <div class="code-block" style="font-size:.76rem;">
+<span class="kw">model</span> <span class="fn">Submission</span> {<br/>
+&nbsp;&nbsp;id          <span class="ty">String</span>   @<span class="fn">id</span> @<span class="fn">default</span>(<span class="fn">cuid</span>())<br/>
+&nbsp;&nbsp;studentId   <span class="ty">String</span><br/>
+&nbsp;&nbsp;repoUrl     <span class="ty">String</span><br/>
+&nbsp;&nbsp;...<br/><br/>
+&nbsp;&nbsp;<span class="hl">@@unique([studentId, repoUrl])</span><br/>
+&nbsp;&nbsp;<span class="cm">// One student, one repo — guaranteed by DB</span><br/>
+}
+          </div>
+        </div>
+        <div class="code-wrap" style="margin-top:0;">
+          <div class="code-label">📄 Controller — Prisma P2002 catch</div>
+          <div class="code-block" style="font-size:.74rem;">
+<span class="kw">try</span> {<br/>
+&nbsp;&nbsp;<span class="kw">await</span> prisma.submission.<span class="fn">create</span>({ data });<br/>
+} <span class="kw">catch</span> (err) {<br/>
+&nbsp;&nbsp;<span class="kw">if</span> (err.code === <span class="hl str">'P2002'</span>) {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> res.<span class="fn">status</span>(<span class="hl2">409</span>).<span class="fn">json</span>({<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message: <span class="str">'You have already submitted this repository.'</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;});<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="kw">throw</span> err;<br/>
+}
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="card" style="border-color:rgba(255,90,110,.3);">
+          <div style="font-size:1.4rem; margin-bottom:10px;">⚡</div>
+          <div style="font-weight:700; margin-bottom:8px; color:var(--danger);">The Race Condition Problem</div>
+          <div style="font-size:.84rem; color:var(--muted); line-height:1.7;">
+            Two requests arrive at the <strong style="color:var(--text);">same millisecond</strong>. Both pass the server's <code style="color:var(--a2); font-family:'Fira Code',monospace;">existingCheck</code>. Both insert — creating a <strong style="color:var(--danger);">duplicate</strong>. Code-level checks alone cannot prevent this.
+          </div>
+        </div>
+        <div class="card" style="border-color:rgba(0,229,160,.3);">
+          <div style="font-size:1.4rem; margin-bottom:10px;">🗄️</div>
+          <div style="font-weight:700; margin-bottom:8px; color:var(--a1);">The Database Fix</div>
+          <div style="font-size:.84rem; color:var(--muted); line-height:1.7;">
+            <code style="color:var(--a1); font-family:'Fira Code',monospace;">@@unique([studentId, repoUrl])</code> makes PostgreSQL enforce the constraint <strong style="color:var(--text);">atomically</strong>. The second insert always fails with <code style="color:var(--a3); font-family:'Fira Code',monospace;">P2002</code> — no matter the timing.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bn-note" style="font-size:.84rem;">
+      🇧🇩 <strong>@@unique([studentId, repoUrl])</strong> — একজন স্টুডেন্ট একই রিপোজিটরি দুইবার কখনো সাবমিট করতে পারবে না।
+      Race Condition হলেও ডাটাবেজ <strong>P2002</strong> এরর দেয় → আমরা <strong>409 Conflict</strong> রিটার্ন করি।
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       SLIDE 7 — LIVE DEMO
+  ═══════════════════════════════════ -->
+  <section class="slide" id="slide-7">
+    <div class="top-bar">
+      <span class="topic-badge">Topic 2D — Live Demo</span>
+      <span class="ts-badge">⏱ 8:30 – 10:30</span>
+    </div>
+
+    <h2 class="st">🎬 Live <span class="grad">Demo Walkthrough</span></h2>
+    <p class="sub">project-review-ashen.vercel.app — Live testing in real time</p>
+
+    <div class="demo-grid">
+      <div class="demo-card" style="border-color:rgba(255,90,110,.3);">
+        <div class="demo-icon">❌</div>
+        <div class="demo-step">Test 1</div>
+        <div class="demo-title" style="color:var(--danger);">Invalid Input</div>
+        <div class="demo-desc">
+          Leave Project Name blank, enter a broken URL → Click Submit.<br/><br/>
+          <strong style="color:var(--text);">Expected:</strong> Red error messages appear instantly below each field. No API call made.
+        </div>
+        <div style="margin-top:12px;"><span class="pill p-r">Client Zod</span></div>
+      </div>
+
+      <div class="demo-card" style="border-color:rgba(0,229,160,.3);">
+        <div class="demo-icon">✅</div>
+        <div class="demo-step">Test 2</div>
+        <div class="demo-title" style="color:var(--a1);">Valid Submission</div>
+        <div class="demo-desc">
+          Fill all fields correctly → Submit.<br/><br/>
+          <strong style="color:var(--text);">Expected:</strong> Success modal appears. New row added to table with <span class="pill p-a">PENDING</span> status.
+        </div>
+        <div style="margin-top:12px;"><span class="pill p-g">3-Layer Pass</span></div>
+      </div>
+
+      <div class="demo-card" style="border-color:rgba(255,209,102,.3);">
+        <div class="demo-icon">🔁</div>
+        <div class="demo-step">Test 3</div>
+        <div class="demo-title" style="color:var(--a3);">Duplicate Submission</div>
+        <div class="demo-desc">
+          Submit the same repository URL again.<br/><br/>
+          <strong style="color:var(--text);">Expected:</strong> Red banner: <em>"You have already submitted this repository."</em>
+        </div>
+        <div style="margin-top:12px;"><span class="pill p-a">DB P2002 → 409</span></div>
+      </div>
+    </div>
+
+    <div style="width:100%; max-width:980px; margin-top:20px; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px 22px; display:flex; align-items:center; gap:16px; backdrop-filter:blur(12px);">
+      <span style="font-size:1.8rem;">🌐</span>
+      <div>
+        <div style="font-size:.82rem; font-weight:700; margin-bottom:3px;">Live Deployment URL</div>
+        <div style="font-family:'Fira Code',monospace; font-size:.8rem; color:var(--a2);">https://project-review-ashen.vercel.app/</div>
+      </div>
+      <div style="margin-left:auto;">
+        <span class="pill p-g">Vercel</span>
+        <span class="pill p-c">Next.js 16</span>
+      </div>
+    </div>
+
+    <div class="bn-note" style="font-size:.84rem;">
+      🇧🇩 লাইভ প্রজেক্টে সরাসরি তিনটি টেস্ট করে দেখান — দর্শকরা বাস্তব প্রমাণ দেখতে পাবেন যে তিনটি স্তরই সঠিকভাবে কাজ করছে।
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       SLIDE 8 — CONCLUSION & VIVA
+  ═══════════════════════════════════ -->
+  <section class="slide" id="slide-8">
+    <div class="top-bar">
+      <span class="topic-badge">Topic 2D — Conclusion & Viva</span>
+      <span class="ts-badge">⏱ 10:30 – 11:30</span>
+    </div>
+
+    <h2 class="st">Conclusion &amp; <span class="grad">Viva Q&amp;A</span></h2>
+
+    <div class="sum-grid">
+      <div class="sum-card" style="border-color:rgba(0,229,160,.3);">
+        <div class="sum-icon">1️⃣</div>
+        <div class="sum-label">Client Zod</div>
+        <div class="sum-val">Instant UX feedback<br/>safeParse on submit<br/><span class="pill p-g" style="margin-top:6px;">Layer 1</span></div>
+      </div>
+      <div class="sum-card" style="border-color:rgba(0,207,255,.3);">
+        <div class="sum-icon">2️⃣</div>
+        <div class="sum-label">Server Zod</div>
+        <div class="sum-val">Bypass-proof filter<br/>XSS protocol block<br/><span class="pill p-c" style="margin-top:6px;">Layer 2</span></div>
+      </div>
+      <div class="sum-card" style="border-color:rgba(255,209,102,.3);">
+        <div class="sum-icon">3️⃣</div>
+        <div class="sum-label">URL Normalize</div>
+        <div class="sum-val">trim · lowercase<br/>strip .git &amp; slash<br/><span class="pill p-a" style="margin-top:6px;">Layer 2+</span></div>
+      </div>
+      <div class="sum-card" style="border-color:rgba(180,138,255,.3);">
+        <div class="sum-icon">4️⃣</div>
+        <div class="sum-label">DB Constraint</div>
+        <div class="sum-val">@@unique([student, repo])<br/>P2002 → 409 Conflict<br/><span class="pill p-p" style="margin-top:6px;">Layer 3</span></div>
+      </div>
+    </div>
+
+    <div style="width:100%; max-width:980px; margin-top:20px; display:flex; flex-direction:column; gap:12px;">
+      <div class="step-row" style="border-color:rgba(0,229,160,.2);">
+        <div class="step-num" style="flex:0 0 24px; width:24px; height:24px; font-size:.72rem;">❓</div>
+        <div class="step-content">
+          <div class="step-title">"Zod client আর server-এ আলাদা কেন? একবার করলেই হয় না?"</div>
+          <div class="step-desc">✅ Client-side = UX. Server-side = Security. যে কেউ Postman দিয়ে client bypass করতে পারে। Server validation বাধ্যতামূলক।</div>
+        </div>
+      </div>
+      <div class="step-row" style="border-color:rgba(0,207,255,.2);">
+        <div class="step-num" style="flex:0 0 24px; width:24px; height:24px; font-size:.72rem;">❓</div>
+        <div class="step-content">
+          <div class="step-title">"Race Condition কী এবং কীভাবে solve করেছেন?"</div>
+          <div class="step-desc">✅ Two simultaneous requests can both pass the code-level check. <strong style="color:var(--text);">@@unique DB constraint</strong> enforces atomicity — the DB rejects the second insert regardless of timing.</div>
+        </div>
+      </div>
+      <div class="step-row" style="border-color:rgba(255,209,102,.2);">
+        <div class="step-num" style="flex:0 0 24px; width:24px; height:24px; font-size:.72rem;">❓</div>
+        <div class="step-content">
+          <div class="step-title">"URL Normalization কেন দরকার?"</div>
+          <div class="step-desc">✅ <code style="color:var(--a2); font-family:'Fira Code',monospace;">repo.git</code>, <code style="color:var(--a2); font-family:'Fira Code',monospace;">repo/</code>, <code style="color:var(--a2); font-family:'Fira Code',monospace;">REPO</code> — সবগুলো একই রিপো কিন্তু ভিন্ন string। Normalize না করলে ডুপ্লিকেট চেক কাজ করবে না।</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center; margin-top:20px; font-size:1.4rem; animation:float 4s ease-in-out infinite;">
+      🙏 ধন্যবাদ &nbsp;|&nbsp; Thank You
+    </div>
+  </section>
+
+</div><!-- /deck -->
+
+<!-- Nav -->
+<div id="controls">
+  <button class="nav-btn" id="btn-prev">‹</button>
+  <div id="slide-counter">1 / 8</div>
+  <button class="nav-btn" id="btn-next">›</button>
+</div>
+<div id="progress-bar"></div>
+<div id="dots"></div>
+
+<script>
+  // Stars
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 130; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() * 2.5 + 0.4;
+    s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${(Math.random()*4+2).toFixed(1)}s;animation-delay:${(Math.random()*6).toFixed(1)}s;opacity:${(Math.random()*0.4+0.08).toFixed(2)};`;
+    starsEl.appendChild(s);
+  }
+
+  // Slides
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total  = slides.length;
+  let cur = 0;
+
+  const counter  = document.getElementById('slide-counter');
+  const btnPrev  = document.getElementById('btn-prev');
+  const btnNext  = document.getElementById('btn-next');
+  const progress = document.getElementById('progress-bar');
+  const dotsEl   = document.getElementById('dots');
+
+  slides.forEach((_,i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i===0?' active':'');
+    d.addEventListener('click', () => goTo(i));
+    dotsEl.appendChild(d);
+  });
+
+  function goTo(idx) {
+    if (idx < 0 || idx >= total) return;
+    slides[cur].classList.remove('active');
+    slides[cur].classList.add('exit-out');
+    const prev = cur;
+    cur = idx;
+    setTimeout(() => slides[prev].classList.remove('exit-out'), 560);
+    slides[cur].classList.add('active');
+    counter.textContent = `${cur+1} / ${total}`;
+    btnPrev.disabled = cur === 0;
+    btnNext.disabled = cur === total-1;
+    progress.style.width = `${((cur+1)/total)*100}%`;
+    document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===cur));
+  }
+
+  slides[0].classList.add('active');
+  btnPrev.disabled = true;
+  progress.style.width = `${(1/total)*100}%`;
+
+  btnNext.addEventListener('click', () => goTo(cur+1));
+  btnPrev.addEventListener('click', () => goTo(cur-1));
+  document.addEventListener('keydown', e => {
+    if (e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' ') goTo(cur+1);
+    if (e.key==='ArrowLeft' ||e.key==='ArrowUp')                 goTo(cur-1);
+  });
+</script>
+</body>
+</html>
