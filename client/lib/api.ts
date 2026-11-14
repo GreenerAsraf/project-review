@@ -51,6 +51,34 @@ export interface ApiErrorResponse {
   errors?: Array<{ field: string; message: string }>;
 }
 
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: "STUDENT" | "MENTOR";
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateProfilePayload {
+  name?: string;
+  currentPassword?: string;
+  newPassword?: string;
+}
+
+export async function getProfile(): Promise<UserProfile> {
+  const res = await apiRequest<{ user: UserProfile }>("/users/me");
+  return res.user;
+}
+
+export async function updateProfile(payload: UpdateProfilePayload): Promise<UserProfile> {
+  const res = await apiRequest<{ user: UserProfile; message: string }>("/users/me", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+  return res.user;
+}
+
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}

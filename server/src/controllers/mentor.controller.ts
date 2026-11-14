@@ -26,6 +26,8 @@ export const getMentorSubmissions = async (
     const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
     const pageSize = Math.max(1, Math.min(50, parseInt(req.query.pageSize as string, 10) || 10));
     const statusQuery = req.query.status as string | undefined;
+    const search = (req.query.search as string)?.trim();
+    const sortBy = (req.query.sortBy as string)?.toLowerCase();
 
     // Filter validation
     let statusFilter: SubmissionStatus | undefined = undefined;
@@ -33,7 +35,22 @@ export const getMentorSubmissions = async (
       statusFilter = statusQuery.toUpperCase() as SubmissionStatus;
     }
 
-    const whereClause = statusFilter ? { status: statusFilter } : {};
+    const whereClause: Record<string, unknown> = statusFilter ? { status: statusFilter } : {};
+
+    if (search) {
+      whereClause.OR = [
+        { projectName: { contains: search, mode: "insensitive" } },
+        { student: { name: { contains: search, mode: "insensitive" } } },
+        { student: { email: { contains: search, mode: "insensitive" } } },
+      ];
+    }
+
+    const orderBy =
+      sortBy === "oldest"
+        ? { createdAt: "asc" as const }
+        : sortBy === "project"
+        ? { projectName: "asc" as const }
+        : { createdAt: "desc" as const };
 
     // Execute optimized parallel database queries without loading full tables into memory
     const [totalRecords, submissions, pendingCount, approvedCount, rejectedCount] =
@@ -43,7 +60,7 @@ export const getMentorSubmissions = async (
           where: whereClause,
           skip: (page - 1) * pageSize,
           take: pageSize,
-          orderBy: { createdAt: "desc" },
+          orderBy,
           select: {
             id: true,
             projectName: true,

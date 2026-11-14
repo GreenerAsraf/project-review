@@ -67,7 +67,65 @@ export const updateSubmissionStatusSchema = z.object({
   }),
 });
 
+// Student edit submission schema (only allowed on PENDING submissions)
+export const updateSubmissionSchema = z.object({
+  projectName: z
+    .string()
+    .trim()
+    .min(3, "Project name must be at least 3 characters long")
+    .max(150, "Project name cannot exceed 150 characters")
+    .optional(),
+  description: z
+    .string()
+    .trim()
+    .min(10, "Description must be at least 10 characters long")
+    .max(5000, "Description cannot exceed 5000 characters")
+    .optional(),
+  liveUrl: z
+    .string()
+    .trim()
+    .url("Valid live URL is required")
+    .refine(
+      (url) => /^https?:\/\//i.test(url),
+      "Live URL must use http or https protocol"
+    )
+    .optional()
+    .or(z.literal("")),
+});
+
+// User profile and password update schema
+export const updateProfileSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(2, "Name must be at least 2 characters long")
+      .max(100, "Name cannot exceed 100 characters")
+      .optional(),
+    currentPassword: z
+      .string()
+      .min(1, "Current password is required to change password")
+      .optional(),
+    newPassword: z
+      .string()
+      .min(6, "New password must be at least 6 characters long")
+      .max(128, "New password cannot exceed 128 characters")
+      .optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.newPassword && !data.currentPassword) return false;
+      return true;
+    },
+    {
+      message: "Current password must be provided to set a new password",
+      path: ["currentPassword"],
+    }
+  );
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreateSubmissionInput = z.infer<typeof createSubmissionSchema>;
 export type UpdateSubmissionStatusInput = z.infer<typeof updateSubmissionStatusSchema>;
+export type UpdateSubmissionInput = z.infer<typeof updateSubmissionSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

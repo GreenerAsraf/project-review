@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { prisma } from "../services/prisma";
-import { CreateSubmissionInput } from "../schemas";
+import { CreateSubmissionInput, UpdateSubmissionInput } from "../schemas";
 import { AuthenticatedRequest } from "../middlewares/auth";
 
 /**
@@ -155,6 +155,124 @@ export const getSubmissionById = async (
     res.status(200).json({ submission });
   } catch (error) {
     console.error("Get submission by id error:", error);
+    res.status(500).json({ message: "An unexpected error occurred. Please try again later." });
+  }
+};
+
+/**
+ * Student endpoint: Edit a PENDING submission
+ * PATCH /api/submissions/:id
+ */
+export const updateSubmission = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user || req.user.role !== "STUDENT") {
+      res.status(403).json({ message: "Forbidden: Only students can edit submissions" });
+      return;
+    }
+
+    const id = req.params.id as string;
+    const { projectName, description, liveUrl } = req.body as UpdateSubmissionInput;
+
+    const existing = await prisma.submission.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      res.status(404).json({ message: "Submission not found" });
+      return;
+    }
+
+    if (existing.studentId !== req.user.userId) {
+      res.status(403).json({ message: "Forbidden: You do not own this submission" });
+      return;
+    }
+
+    if (existing.status !== "PENDING") {
+      res.status(400).json({
+        message: `Cannot edit a submission that has already been ${existing.status.toLowerCase()}`,
+      });
+      return;
+    }
+
+    const updated = await prisma.submission.update({
+      where: { id },
+      data: {
+        ...(projectName ? { projectName } : {}),
+        ...(description ? { description } : {}),
+        ...(liveUrl !== undefined
+          ? { liveUrl: liveUrl && liveUrl.trim().length > 0 ? liveUrl.trim() : null }
+          : {}),
+      },
+      select: {
+        id: true,
+        projectName: true,
+        repoUrl: true,
+        liveUrl: true,
+        description: true,
+        status: true,
+        studentId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    res.status(200).json({
+      message: "Submission updated successfully",
+      submission: updated,
+    });
+  } catch (error) {
+    console.error("Update submission error:", error);
+    res.status(500).json({ message: "An unexpected error occurred. Please try again later." });
+  }
+};
+
+/**
+ * Student endpoint: Delete a PENDING submission
+ * DELETE /api/submissions/:id
+ */
+export const deleteSubmission = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user || req.user.role !== "STUDENT") {
+      res.status(403).json({ message: "Forbidden: Only students can delete submissions" });
+      return;
+    }
+
+    const id = req.params.id as string;
+
+    const existing = await prisma.submission.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      res.status(404).json({ message: "Submission not found" });
+      return;
+    }
+
+    if (existing.studentId !== req.user.userId) {
+      res.status(403).json({ message: "Forbidden: You do not own this submission" });
+      return;
+    }
+
+    if (existing.status !== "PENDING") {
+      res.status(400).json({
+        message: `Cannot delete a submission that has already been ${existing.status.toLowerCase()}`,
+      });
+      return;
+    }
+
+    await prisma.submission.delete({
+      where: { id },
+    });
+
+    res.status(200).json({ message: "Submission deleted successfully" });
+  } catch (error) {
+    console.error("Delete submission error:", error);
     res.status(500).json({ message: "An unexpected error occurred. Please try again later." });
   }
 };

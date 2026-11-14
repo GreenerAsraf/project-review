@@ -3,13 +3,14 @@
 import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { GraduationCap, Home, ArrowLeft, RotateCw } from "lucide-react";
+import { GraduationCap, Home, ArrowLeft, RotateCw, Settings } from "lucide-react";
 
 interface NavigationBarProps {
   variant?: "dark" | "light";
   showHome?: boolean;
   showBack?: boolean;
   showReload?: boolean;
+  showSettings?: boolean;
   rightContent?: React.ReactNode;
   subtitle?: string;
 }
@@ -19,6 +20,7 @@ export function NavigationBar({
   showHome = true,
   showBack = true,
   showReload = true,
+  showSettings = true,
   rightContent,
   subtitle,
 }: NavigationBarProps) {
@@ -131,6 +133,21 @@ export function NavigationBar({
                 <span>Reload</span>
               </button>
             )}
+
+            {showSettings && (
+              <Link
+                href="/settings"
+                title="Account Settings"
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  isDark
+                    ? "text-slate-300 hover:text-white hover:bg-white/10"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+              >
+                <Settings className="w-3.5 h-3.5 text-slate-400" />
+                <span>Settings</span>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -178,6 +195,19 @@ export function NavigationBar({
               >
                 <RotateCw className="w-4 h-4" />
               </button>
+            )}
+            {showSettings && (
+              <Link
+                href="/settings"
+                title="Settings"
+                className={`p-2 rounded-lg text-xs transition-colors ${
+                  isDark
+                    ? "text-slate-300 hover:text-white hover:bg-white/10"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+              >
+                <Settings className="w-4 h-4 text-slate-400" />
+              </Link>
             )}
           </div>
 
