@@ -112,17 +112,11 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 /* ─── Main Page ─────────────────────────────────────────────── */
 export default function Home() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+  const { user } = useAuth();
   const [stats, setStats] = useState<PublicStats | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Redirect logged-in users
-  useEffect(() => {
-    if (!loading && user) {
-      router.push(user.role === "MENTOR" ? "/mentor" : "/student");
-    }
-  }, [user, loading, router]);
+  const dashboardUrl = user?.role === "MENTOR" ? "/mentor" : "/student";
 
   // Fetch public stats
   useEffect(() => {
@@ -199,16 +193,34 @@ export default function Home() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/10 text-sm cursor-pointer">
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-600/30 cursor-pointer">
-                Get Started
-              </Button>
-            </Link>
+            {user ? (
+              <>
+                <Link href="/settings">
+                  <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/10 text-sm cursor-pointer">
+                    Settings
+                  </Button>
+                </Link>
+                <Link href={dashboardUrl}>
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-600/30 cursor-pointer flex items-center gap-1.5">
+                    Dashboard
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/10 text-sm cursor-pointer">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-600/30 cursor-pointer">
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile hamburger */}
@@ -228,12 +240,28 @@ export default function Home() {
             <a href="#stats" onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-300">Stats</a>
             <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-300">FAQ</a>
             <div className="flex gap-3 pt-2 border-t border-white/5">
-              <Link href="/login" className="flex-1">
-                <Button variant="outline" size="sm" className="w-full border-white/20 text-white cursor-pointer">Sign In</Button>
-              </Link>
-              <Link href="/register" className="flex-1">
-                <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-500 cursor-pointer">Get Started</Button>
-              </Link>
+              {user ? (
+                <>
+                  <Link href="/settings" onClick={() => setMobileMenuOpen(false)} className="flex-1">
+                    <Button variant="outline" size="sm" className="w-full border-white/20 text-white cursor-pointer">Settings</Button>
+                  </Link>
+                  <Link href={dashboardUrl} onClick={() => setMobileMenuOpen(false)} className="flex-1">
+                    <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-500 cursor-pointer flex items-center justify-center gap-1">
+                      Dashboard
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex-1">
+                    <Button variant="outline" size="sm" className="w-full border-white/20 text-white cursor-pointer">Sign In</Button>
+                  </Link>
+                  <Link href="/register" onClick={() => setMobileMenuOpen(false)} className="flex-1">
+                    <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-500 cursor-pointer">Get Started</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -261,17 +289,28 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 justify-center mb-16">
-            <Link href="/register">
-              <Button size="lg" className="px-8 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold shadow-2xl shadow-blue-600/30 transition-all group cursor-pointer">
-                Start Submitting Free
-                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button variant="outline" size="lg" className="px-8 h-12 border-white/20 bg-white/5 hover:bg-white/10 text-white font-medium backdrop-blur-sm cursor-pointer">
-                Sign In to Dashboard
-              </Button>
-            </Link>
+            {user ? (
+              <Link href={dashboardUrl}>
+                <Button size="lg" className="px-8 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold shadow-2xl shadow-blue-600/30 transition-all group cursor-pointer flex items-center gap-2">
+                  Go to {user.role === "MENTOR" ? "Mentor Dashboard" : "Student Dashboard"}
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/register">
+                  <Button size="lg" className="px-8 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold shadow-2xl shadow-blue-600/30 transition-all group cursor-pointer">
+                    Start Submitting Free
+                    <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button variant="outline" size="lg" className="px-8 h-12 border-white/20 bg-white/5 hover:bg-white/10 text-white font-medium backdrop-blur-sm cursor-pointer">
+                    Sign In to Dashboard
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mini feature pills */}
@@ -418,17 +457,28 @@ export default function Home() {
               <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Ready to Submit Your First Project?</h2>
               <p className="text-slate-400 mb-8 max-w-lg mx-auto">Join students already getting structured feedback from mentors. It takes less than a minute to get started.</p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/register">
-                  <Button size="lg" className="px-8 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold shadow-2xl shadow-blue-600/30 cursor-pointer group">
-                    Create Student Account
-                    <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </Link>
-                <Link href="/login">
-                  <Button variant="outline" size="lg" className="px-8 h-12 border-white/20 bg-white/5 hover:bg-white/10 text-white cursor-pointer">
-                    Sign In as Mentor
-                  </Button>
-                </Link>
+                {user ? (
+                  <Link href={dashboardUrl}>
+                    <Button size="lg" className="px-8 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold shadow-2xl shadow-blue-600/30 cursor-pointer group flex items-center gap-2">
+                      Go to {user.role === "MENTOR" ? "Mentor Portal" : "Student Portal"}
+                      <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/register">
+                      <Button size="lg" className="px-8 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold shadow-2xl shadow-blue-600/30 cursor-pointer group">
+                        Create Student Account
+                        <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </Link>
+                    <Link href="/login">
+                      <Button variant="outline" size="lg" className="px-8 h-12 border-white/20 bg-white/5 hover:bg-white/10 text-white cursor-pointer">
+                        Sign In as Mentor
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
