@@ -13,14 +13,34 @@ export interface Submission {
   repoUrl: string;
   liveUrl?: string | null;
   description: string;
+  category?: string | null;
+  screenshotUrl?: string | null;
   status: "PENDING" | "APPROVED" | "REJECTED";
   studentId: string;
+  rating?: number | null;
+  feedback?: string | null;
+  reviewedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  likesCount?: number;
+  commentsCount?: number;
+  isLikedByMe?: boolean;
   student?: {
     id: string;
     name: string;
-    email: string;
+    email?: string;
+  };
+}
+
+export interface ProjectComment {
+  id: string;
+  content: string;
+  createdAt: string;
+  userId: string;
+  user: {
+    id: string;
+    name: string;
+    role: "STUDENT" | "MENTOR";
   };
 }
 
@@ -44,6 +64,11 @@ export interface MentorSubmissionsResponse {
   submissions: Submission[];
   pagination: PaginationMeta;
   stats: MentorStats;
+}
+
+export interface ShowcaseResponse {
+  submissions: Submission[];
+  pagination: PaginationMeta;
 }
 
 export interface ApiErrorResponse {
@@ -77,6 +102,93 @@ export async function updateProfile(payload: UpdateProfilePayload): Promise<User
     body: JSON.stringify(payload),
   });
   return res.user;
+}
+
+// ── Showcase & Social API Methods ──────────────────────────────────────────
+
+export async function getPublicShowcase(params?: {
+  page?: number;
+  pageSize?: number;
+  category?: string;
+  search?: string;
+  filter?: "all" | "my";
+  sortBy?: "newest" | "rating" | "likes" | "oldest";
+}): Promise<ShowcaseResponse> {
+  const query = new URLSearchParams();
+  if (params?.page) query.set("page", params.page.toString());
+  if (params?.pageSize) query.set("pageSize", params.pageSize.toString());
+  if (params?.category) query.set("category", params.category);
+  if (params?.search) query.set("search", params.search);
+  if (params?.filter) query.set("filter", params.filter);
+  if (params?.sortBy) query.set("sortBy", params.sortBy);
+
+  const qs = query.toString();
+  return apiRequest<ShowcaseResponse>(`/public/showcase${qs ? `?${qs}` : ""}`);
+}
+
+export async function getFeaturedShowcase(): Promise<{ featured: Submission[] }> {
+  return apiRequest<{ featured: Submission[] }>("/public/showcase/featured");
+}
+
+export async function getSubmissionComments(
+  submissionId: string
+): Promise<{ comments: ProjectComment[] }> {
+  return apiRequest<{ comments: ProjectComment[] }>(`/public/submissions/${submissionId}/comments`);
+}
+
+export async function toggleLike(
+  submissionId: string
+): Promise<{ message: string; isLiked: boolean; likesCount: number }> {
+  return apiRequest<{ message: string; isLiked: boolean; likesCount: number }>(
+    `/submissions/${submissionId}/like`,
+    { method: "POST" }
+  );
+}
+
+export async function addComment(
+  submissionId: string,
+  content: string
+): Promise<{ message: string; comment: ProjectComment }> {
+  return apiRequest<{ message: string; comment: ProjectComment }>(
+    `/submissions/${submissionId}/comments`,
+    {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    }
+  );
+}
+
+export async function deleteComment(
+  commentId: string
+): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>(`/comments/${commentId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function deleteSubmission(
+  submissionId: string
+): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>(`/submissions/${submissionId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function reviewSubmission(
+  submissionId: string,
+  payload: {
+    status: "APPROVED" | "REJECTED";
+    rating?: number;
+    feedback?: string;
+  }
+): Promise<{ message: string; submission: Submission }> {
+  return apiRequest<{ message: string; submission: Submission }>(
+    `/mentor/submissions/${submissionId}/status`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }
+  );
 }
 
 export async function apiRequest<T>(

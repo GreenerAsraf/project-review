@@ -1,6 +1,10 @@
 import { Response } from "express";
 import { prisma } from "../services/prisma";
-import { CreateSubmissionInput, UpdateSubmissionInput } from "../schemas";
+import {
+  CreateSubmissionInput,
+  UpdateSubmissionInput,
+  CreateCommentInput,
+} from "../schemas";
 import { AuthenticatedRequest } from "../middlewares/auth";
 
 /**
@@ -147,6 +151,7 @@ export const getSubmissionById = async (
       where: { id },
       include: {
         student: { select: { id: true, name: true, email: true } },
+        _count: { select: { likes: true, comments: true } },
       },
     });
 
@@ -155,8 +160,12 @@ export const getSubmissionById = async (
       return;
     }
 
-    // Students cannot view other students' submissions
-    if (req.user?.role === "STUDENT" && submission.studentId !== req.user.userId) {
+    // Public showcase projects can be viewed by anyone; pending/rejected can only be viewed by owner or mentor
+    if (
+      submission.status !== "APPROVED" &&
+      req.user?.role === "STUDENT" &&
+      submission.studentId !== req.user.userId
+    ) {
       res.status(403).json({ message: "Forbidden: You cannot view this submission" });
       return;
     }
@@ -245,7 +254,7 @@ export const updateSubmission = async (
 };
 
 /**
- * Student endpoint: Delete a PENDING submission
+ * Student/Author endpoint: Delete own submission (removes with cascade)
  * DELETE /api/submissions/:id
  */
 export const deleteSubmission = async (
@@ -253,8 +262,8 @@ export const deleteSubmission = async (
   res: Response
 ): Promise<void> => {
   try {
-    if (!req.user || req.user.role !== "STUDENT") {
-      res.status(403).json({ message: "Forbidden: Only students can delete submissions" });
+    if (!req.user) {
+      res.status(401).json({ message: "Authentication required" });
       return;
     }
 
@@ -269,15 +278,9 @@ export const deleteSubmission = async (
       return;
     }
 
-    if (existing.studentId !== req.user.userId) {
-      res.status(403).json({ message: "Forbidden: You do not own this submission" });
-      return;
-    }
-
-    if (existing.status !== "PENDING") {
-      res.status(400).json({
-        message: `Cannot delete a submission that has already been ${existing.status.toLowerCase()}`,
-      });
+    // Owner can delete their own project; mentors can also moderate
+    if (existing.studentId !== req.user.userId && req.user.role !== "MENTOR") {
+      res.status(403).json({ message: "Forbidden: You do not have permission to delete this submission" });
       return;
     }
 
@@ -285,9 +288,179 @@ export const deleteSubmission = async (
       where: { id },
     });
 
-    res.status(200).json({ message: "Submission deleted successfully" });
+    res.status(200).json({ message: "Project deleted successfully" });
   } catch (error) {
     console.error("Delete submission error:", error);
     res.status(500).json({ message: "An unexpected error occurred. Please try again later." });
+  }
+};
+
+/**
+ * Social endpoint: Toggle like on an approved project
+ * POST /api/submissions/:id/like
+ */
+export const toggleLikeSubmission = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Authentication required to like projects" });
+      return;
+    }
+
+    const submissionId = req.params.id as string;
+    const userId = req.user.userId;
+
+    const submission = await prisma.submission.findUnique({
+      where: { id: submissionId },
+      select: { id: true, status: true },
+    });
+
+    if (!submission) {
+      res.status(404).json({ message: "Project not found" });
+      return;
+    }
+
+    // Check if like exists
+    const existingLike = await prisma.projectLike.findUnique({
+      where: {
+        unique_submission_like: {
+          submissionId,
+          userId,
+        },
+      },
+    });
+
+    let isLiked = false;
+
+    if (existingLike) {
+      // Unlike
+      await prisma.projectLike.delete({
+        where: { id: existingLike.id },
+      });
+      isLiked = false;
+    } else {
+      // Like
+      await prisma.projectLike.create({
+        data: {
+          submissionId,
+          userId,
+        },
+      });
+      isLiked = true;
+    }
+
+    const likesCount = await prisma.projectLike.count({
+      where: { submissionId },
+    });
+
+    res.status(200).json({
+      message: isLiked ? "Project liked" : "Project unliked",
+      isLiked,
+      likesCount,
+    });
+  } catch (error) {
+    console.error("Toggle like error:", error);
+    res.status(500).json({ message: "Failed to update project like." });
+  }
+};
+
+/**
+ * Social endpoint: Add a comment to a project
+ * POST /api/submissions/:id/comments
+ */
+export const addComment = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Authentication required to post comments" });
+      return;
+    }
+
+    const submissionId = req.params.id as string;
+    const { content } = req.body as CreateCommentInput;
+
+    const submission = await prisma.submission.findUnique({
+      where: { id: submissionId },
+      select: { id: true },
+    });
+
+    if (!submission) {
+      res.status(404).json({ message: "Project not found" });
+      return;
+    }
+
+    const comment = await prisma.projectComment.create({
+      data: {
+        submissionId,
+        userId: req.user.userId,
+        content: content.trim(),
+      },
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        userId: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    res.status(201).json({
+      message: "Comment posted successfully",
+      comment,
+    });
+  } catch (error) {
+    console.error("Add comment error:", error);
+    res.status(500).json({ message: "Failed to post comment." });
+  }
+};
+
+/**
+ * Social endpoint: Delete own comment (or mentor moderate)
+ * DELETE /api/comments/:commentId
+ */
+export const deleteComment = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Authentication required" });
+      return;
+    }
+
+    const commentId = req.params.commentId as string;
+
+    const comment = await prisma.projectComment.findUnique({
+      where: { id: commentId },
+    });
+
+    if (!comment) {
+      res.status(404).json({ message: "Comment not found" });
+      return;
+    }
+
+    if (comment.userId !== req.user.userId && req.user.role !== "MENTOR") {
+      res.status(403).json({ message: "Forbidden: You cannot delete another user's comment" });
+      return;
+    }
+
+    await prisma.projectComment.delete({
+      where: { id: commentId },
+    });
+
+    res.status(200).json({ message: "Comment deleted successfully" });
+  } catch (error) {
+    console.error("Delete comment error:", error);
+    res.status(500).json({ message: "Failed to delete comment." });
   }
 };

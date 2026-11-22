@@ -10,6 +10,7 @@ import submissionRoutes from "./routes/submission.routes";
 import mentorRoutes from "./routes/mentor.routes";
 import publicRoutes from "./routes/public.routes";
 import userRoutes from "./routes/user.routes";
+import commentRoutes from "./routes/comment.routes";
 
 export const createApp = (): Application => {
   const app = express();
@@ -58,6 +59,7 @@ export const createApp = (): Application => {
   app.use("/api/auth", authRoutes);
   app.use("/api/users", userRoutes);
   app.use("/api/submissions", submissionRoutes);
+  app.use("/api/comments", commentRoutes);
   app.use("/api/mentor", mentorRoutes);
   app.use("/api/public", publicRoutes);
 
