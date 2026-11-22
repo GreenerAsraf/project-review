@@ -448,10 +448,11 @@ function ShowcaseContent() {
           ) : (
             <div className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {submissions.map((sub) => (
+                {submissions.map((sub, idx) => (
                   <ShowcaseCard
                     key={sub.id}
                     submission={sub}
+                    index={idx}
                     currentUserId={user?.id}
                     onViewDetails={openProjectModal}
                     onLikeToggle={handleLikeToggle}

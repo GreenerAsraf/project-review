@@ -36,6 +36,7 @@ export function ProjectDetailModal({
   onDeleteRequest,
 }: ProjectDetailModalProps) {
   const [copied, setCopied] = useState(false);
+  const [likeAnimating, setLikeAnimating] = useState(false);
 
   // Close on Escape key
   useEffect(() => {
@@ -121,7 +122,11 @@ export function ProjectDetailModal({
             <div className="flex items-center gap-2 self-start">
               <button
                 type="button"
-                onClick={() => onLikeToggle(submission.id)}
+                onClick={() => {
+                  setLikeAnimating(true);
+                  setTimeout(() => setLikeAnimating(false), 450);
+                  onLikeToggle(submission.id);
+                }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                   submission.isLikedByMe
                     ? "bg-rose-500/20 text-rose-400 border-rose-500/40"
@@ -129,9 +134,9 @@ export function ProjectDetailModal({
                 }`}
               >
                 <Heart
-                  className={`w-4 h-4 ${
+                  className={`w-4 h-4 transition-colors duration-200 ${
                     submission.isLikedByMe ? "fill-rose-500 text-rose-500" : ""
-                  }`}
+                  } ${likeAnimating ? "animate-heart-pulse" : ""}`}
                 />
                 <span>{submission.likesCount ?? 0}</span>
               </button>

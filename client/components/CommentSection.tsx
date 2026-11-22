@@ -124,7 +124,7 @@ export function CommentSection({
                 type="submit"
                 size="sm"
                 disabled={submitting || !content.trim()}
-                className="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs px-3 py-1 h-7 rounded-lg cursor-pointer"
+                className="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs px-3 py-1 h-7 rounded-lg cursor-pointer transition-transform active:scale-95"
               >
                 {submitting ? (
                   <Clock className="w-3 h-3 animate-spin" />
@@ -150,7 +150,7 @@ export function CommentSection({
       {/* Comments List */}
       <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
         {loading ? (
-          <div className="py-4 text-center text-xs text-slate-500">
+          <div className="py-4 text-center text-xs text-slate-500 animate-pulse">
             Loading comments...
           </div>
         ) : comments.length === 0 ? (
@@ -165,7 +165,7 @@ export function CommentSection({
             return (
               <div
                 key={comment.id}
-                className="p-3 rounded-xl bg-white/3 border border-white/5 space-y-1 group transition-colors hover:bg-white/5"
+                className="p-3 rounded-xl bg-white/3 border border-white/5 space-y-1 group transition-all hover:bg-white/5 animate-slide-in-down"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
@@ -173,7 +173,7 @@ export function CommentSection({
                       {comment.user?.name || "Student"}
                     </span>
                     <span
-                      className={`inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-md text-[9px] font-semibold ${
+                      className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-semibold ${
                         isMentor
                           ? "bg-purple-500/10 text-purple-300 border border-purple-500/20"
                           : "bg-blue-500/10 text-blue-300 border border-blue-500/20"

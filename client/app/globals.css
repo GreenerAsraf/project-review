@@ -21,6 +21,8 @@
   }
 }
 
+/* ─── Purposeful Micro-Animations ─────────────────────────────────────────── */
+
 @keyframes float-gentle {
   0%, 100% {
     transform: translateY(0px) rotate(0deg);
@@ -59,6 +61,54 @@
   }
 }
 
+@keyframes heart-pulse {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.38);
+  }
+  65% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ken-burns {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.06);
+  }
+}
+
+/* ─── Animation Utility Classes ─────────────────────────────────────────── */
+
 .animate-float-gentle {
   animation: float-gentle 5s ease-in-out infinite;
 }
@@ -73,4 +123,33 @@
 
 .animate-badge-bounce {
   animation: badge-bounce 3.5s ease-in-out infinite;
+}
+
+.animate-heart-pulse {
+  animation: heart-pulse 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.45s ease-out forwards;
+}
+
+.animate-slide-in-down {
+  animation: slide-in-down 0.35s ease-out forwards;
+}
+
+.animate-ken-burns {
+  animation: ken-burns 8s ease-in-out infinite alternate;
+}
+
+/* ─── Accessibility: prefers-reduced-motion ────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -17,6 +17,7 @@ import {
 interface ShowcaseCardProps {
   submission: Submission;
   currentUserId?: string;
+  index?: number;
   onViewDetails: (sub: Submission) => void;
   onLikeToggle: (id: string) => void;
   onDeleteRequest?: (sub: Submission) => void;
@@ -25,6 +26,7 @@ interface ShowcaseCardProps {
 export function ShowcaseCard({
   submission,
   currentUserId,
+  index = 0,
   onViewDetails,
   onLikeToggle,
   onDeleteRequest,
@@ -35,14 +37,15 @@ export function ShowcaseCard({
   const handleLikeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setLikeAnimating(true);
-    setTimeout(() => setLikeAnimating(false), 400);
+    setTimeout(() => setLikeAnimating(false), 450);
     onLikeToggle(submission.id);
   };
 
   return (
     <div
       onClick={() => onViewDetails(submission)}
-      className="group relative flex flex-col justify-between rounded-2xl bg-slate-900/80 border border-white/10 hover:border-blue-500/40 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 overflow-hidden cursor-pointer backdrop-blur-md hover:-translate-y-1"
+      style={{ animationDelay: `${Math.min(index * 50, 350)}ms` }}
+      className="group relative flex flex-col justify-between rounded-2xl bg-slate-900/80 border border-white/10 hover:border-blue-500/40 hover:shadow-2xl hover:shadow-blue-500/15 transition-all duration-300 overflow-hidden cursor-pointer backdrop-blur-md hover:-translate-y-1.5 animate-fade-in-up"
     >
       <div>
         {/* Top Cover Image Area */}
@@ -130,11 +133,11 @@ export function ShowcaseCard({
               }`}
             >
               <Heart
-                className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                className={`w-3.5 h-3.5 transition-colors duration-200 ${
                   submission.isLikedByMe
                     ? "fill-rose-500 text-rose-500"
                     : "text-slate-400"
-                } ${likeAnimating ? "scale-130" : "scale-100"}`}
+                } ${likeAnimating ? "animate-heart-pulse" : ""}`}
               />
               <span>{submission.likesCount ?? 0}</span>
             </button>
