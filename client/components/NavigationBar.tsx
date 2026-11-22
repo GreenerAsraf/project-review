@@ -3,7 +3,14 @@
 import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { GraduationCap, Home, ArrowLeft, RotateCw, Settings } from "lucide-react";
+import {
+  GraduationCap,
+  Home,
+  ArrowLeft,
+  RotateCw,
+  Settings,
+  Sparkles,
+} from "lucide-react";
 
 interface NavigationBarProps {
   variant?: "dark" | "light";
@@ -11,6 +18,7 @@ interface NavigationBarProps {
   showBack?: boolean;
   showReload?: boolean;
   showSettings?: boolean;
+  showShowcase?: boolean;
   rightContent?: React.ReactNode;
   subtitle?: string;
 }
@@ -21,6 +29,7 @@ export function NavigationBar({
   showBack = true,
   showReload = true,
   showSettings = true,
+  showShowcase = true,
   rightContent,
   subtitle,
 }: NavigationBarProps) {
@@ -81,7 +90,7 @@ export function NavigationBar({
             </div>
           </Link>
 
-          {/* Quick Actions: Back, Home, Reload */}
+          {/* Quick Actions: Back, Home, Showcase, Reload, Settings */}
           <div
             className={`hidden sm:flex items-center gap-1.5 pl-3 border-l ${
               isDark ? "border-white/15" : "border-gray-200"
@@ -115,6 +124,21 @@ export function NavigationBar({
               >
                 <Home className="w-3.5 h-3.5 text-blue-400" />
                 <span>Home</span>
+              </Link>
+            )}
+
+            {showShowcase && (
+              <Link
+                href="/showcase"
+                title="Public Project Showcase"
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  isDark
+                    ? "text-slate-300 hover:text-white hover:bg-white/10"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Showcase</span>
               </Link>
             )}
 
@@ -180,6 +204,19 @@ export function NavigationBar({
                 }`}
               >
                 <Home className="w-4 h-4 text-blue-400" />
+              </Link>
+            )}
+            {showShowcase && (
+              <Link
+                href="/showcase"
+                title="Showcase"
+                className={`p-2 rounded-lg text-xs transition-colors ${
+                  isDark
+                    ? "text-slate-300 hover:text-white hover:bg-white/10"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+              >
+                <Sparkles className="w-4 h-4 text-amber-400" />
               </Link>
             )}
             {showReload && (
