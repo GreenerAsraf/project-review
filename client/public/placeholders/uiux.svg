@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 360" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#831843"/>
+      <stop offset="50%" stop-color="#e11d48"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="600" height="360" fill="url(#bg)"/>
+  <rect width="600" height="360" fill="url(#grid)"/>
+  <circle cx="300" cy="155" r="54" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+  <path d="M 300 132 C 283 132 270 144 270 158 C 270 172 284 178 294 178 C 298 178 301 175 301 171 C 301 168 299 166 299 163 C 299 159 303 155 307 155 L 314 155 C 323 155 330 148 330 140 C 330 135 316 132 300 132 Z" fill="none" stroke="#ffffff" stroke-width="3"/>
+  <circle cx="282" cy="146" r="2" fill="#ffffff"/>
+  <circle cx="295" cy="141" r="2" fill="#ffffff"/>
+  <circle cx="310" cy="143" r="2" fill="#ffffff"/>
+  <text x="300" y="245" text-anchor="middle" fill="#ffffff" font-family="system-ui, sans-serif" font-size="20" font-weight="700" letter-spacing="1">UI / UX CASE STUDY</text>
+  <text x="300" y="270" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="system-ui, sans-serif" font-size="12" font-weight="500">ProjectPilot Showcase</text>
+</svg>

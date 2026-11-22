@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 360" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#581c87"/>
+      <stop offset="50%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#db2777"/>
+    </linearGradient>
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="600" height="360" fill="url(#bg)"/>
+  <rect width="600" height="360" fill="url(#grid)"/>
+  <circle cx="300" cy="155" r="54" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+  <rect x="278" y="138" width="44" height="34" rx="4" fill="none" stroke="#ffffff" stroke-width="3"/>
+  <line x1="278" y1="147" x2="322" y2="147" stroke="#ffffff" stroke-width="2.5"/>
+  <circle cx="284" cy="142.5" r="1.5" fill="#ffffff"/>
+  <circle cx="289" cy="142.5" r="1.5" fill="#ffffff"/>
+  <text x="300" y="245" text-anchor="middle" fill="#ffffff" font-family="system-ui, sans-serif" font-size="20" font-weight="700" letter-spacing="1">FRONTEND WEB APP</text>
+  <text x="300" y="270" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="system-ui, sans-serif" font-size="12" font-weight="500">ProjectPilot Showcase</text>
+</svg>

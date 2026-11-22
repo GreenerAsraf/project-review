@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 360" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </linearGradient>
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="600" height="360" fill="url(#bg)"/>
+  <rect width="600" height="360" fill="url(#grid)"/>
+  <circle cx="300" cy="155" r="54" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+  <polygon points="300,135 306,149 321,151 310,161 313,176 300,168 287,176 290,161 279,151 294,149" fill="#fbbf24" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="300" y="245" text-anchor="middle" fill="#ffffff" font-family="system-ui, sans-serif" font-size="20" font-weight="700" letter-spacing="1">STUDENT PROJECT</text>
+  <text x="300" y="270" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="system-ui, sans-serif" font-size="12" font-weight="500">ProjectPilot Showcase</text>
+</svg>
