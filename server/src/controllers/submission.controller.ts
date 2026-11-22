@@ -29,7 +29,7 @@ export const createSubmission = async (
       return;
     }
 
-    const { projectName, description, repoUrl, liveUrl } =
+    const { projectName, description, repoUrl, liveUrl, category, screenshotUrl } =
       req.body as CreateSubmissionInput;
 
     const normalizedRepo = normalizeRepoUrl(repoUrl);
@@ -56,6 +56,8 @@ export const createSubmission = async (
         description,
         repoUrl: normalizedRepo,
         liveUrl: liveUrl && liveUrl.trim().length > 0 ? liveUrl.trim() : null,
+        category: category ?? "Full Stack",
+        screenshotUrl: screenshotUrl && screenshotUrl.trim().length > 0 ? screenshotUrl.trim() : null,
         studentId: req.user.userId,
       },
       select: {
@@ -64,6 +66,8 @@ export const createSubmission = async (
         repoUrl: true,
         liveUrl: true,
         description: true,
+        category: true,
+        screenshotUrl: true,
         status: true,
         studentId: true,
         createdAt: true,
@@ -113,7 +117,12 @@ export const getMySubmissions = async (
         repoUrl: true,
         liveUrl: true,
         description: true,
+        category: true,
+        screenshotUrl: true,
         status: true,
+        rating: true,
+        feedback: true,
+        reviewedAt: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -174,7 +183,7 @@ export const updateSubmission = async (
     }
 
     const id = req.params.id as string;
-    const { projectName, description, liveUrl } = req.body as UpdateSubmissionInput;
+    const { projectName, description, liveUrl, category, screenshotUrl } = req.body as UpdateSubmissionInput;
 
     const existing = await prisma.submission.findUnique({
       where: { id },
@@ -205,6 +214,10 @@ export const updateSubmission = async (
         ...(liveUrl !== undefined
           ? { liveUrl: liveUrl && liveUrl.trim().length > 0 ? liveUrl.trim() : null }
           : {}),
+        ...(category ? { category } : {}),
+        ...(screenshotUrl !== undefined
+          ? { screenshotUrl: screenshotUrl && screenshotUrl.trim().length > 0 ? screenshotUrl.trim() : null }
+          : {}),
       },
       select: {
         id: true,
@@ -212,6 +225,8 @@ export const updateSubmission = async (
         repoUrl: true,
         liveUrl: true,
         description: true,
+        category: true,
+        screenshotUrl: true,
         status: true,
         studentId: true,
         createdAt: true,

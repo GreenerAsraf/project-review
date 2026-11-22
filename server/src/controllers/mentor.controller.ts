@@ -12,6 +12,8 @@ import { UpdateSubmissionStatusInput } from "../schemas";
  * - page: number (default 1)
  * - pageSize: number (default 10)
  * - status: 'PENDING' | 'APPROVED' | 'REJECTED' (optional filter)
+ * - search: string (optional — project name, student name or email)
+ * - sortBy: 'oldest' | 'project' | default newest
  */
 export const getMentorSubmissions = async (
   req: AuthenticatedRequest,
@@ -52,7 +54,7 @@ export const getMentorSubmissions = async (
         ? { projectName: "asc" as const }
         : { createdAt: "desc" as const };
 
-    // Execute optimized parallel database queries without loading full tables into memory
+    // Execute optimized parallel database queries
     const [totalRecords, submissions, pendingCount, approvedCount, rejectedCount] =
       await Promise.all([
         prisma.submission.count({ where: whereClause }),
@@ -67,7 +69,12 @@ export const getMentorSubmissions = async (
             repoUrl: true,
             liveUrl: true,
             description: true,
+            category: true,
+            screenshotUrl: true,
             status: true,
+            rating: true,
+            feedback: true,
+            reviewedAt: true,
             createdAt: true,
             updatedAt: true,
             student: {
@@ -110,7 +117,8 @@ export const getMentorSubmissions = async (
 };
 
 /**
- * Mentor-only endpoint: Approve or Reject a submission by ID
+ * Mentor-only endpoint: Approve or Reject a submission with optional star rating and feedback
+ * PATCH /api/mentor/submissions/:id/status
  */
 export const updateSubmissionStatus = async (
   req: AuthenticatedRequest,
@@ -123,7 +131,7 @@ export const updateSubmissionStatus = async (
     }
 
     const id = req.params.id as string;
-    const { status } = req.body as UpdateSubmissionStatusInput;
+    const { status, rating, feedback } = req.body as UpdateSubmissionStatusInput;
 
     const existingSubmission = await prisma.submission.findUnique({
       where: { id },
@@ -136,14 +144,24 @@ export const updateSubmissionStatus = async (
 
     const updatedSubmission = await prisma.submission.update({
       where: { id },
-      data: { status },
+      data: {
+        status,
+        rating: rating ?? null,
+        feedback: feedback ?? null,
+        reviewedAt: new Date(),
+      },
       select: {
         id: true,
         projectName: true,
         repoUrl: true,
         liveUrl: true,
         description: true,
+        category: true,
+        screenshotUrl: true,
         status: true,
+        rating: true,
+        feedback: true,
+        reviewedAt: true,
         createdAt: true,
         updatedAt: true,
         student: {

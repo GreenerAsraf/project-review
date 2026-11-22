@@ -1,4 +1,4 @@
-// Prisma schema for Project Submission and Review Dashboard
+// Prisma schema for ProjectPilot — Showcase, Social & Evaluation System
 
 generator client {
   provider = "prisma-client-js"
@@ -21,32 +21,71 @@ enum SubmissionStatus {
 }
 
 model User {
-  id           String       @id @default(uuid())
+  id           String           @id @default(uuid())
   name         String
-  email        String       @unique
+  email        String           @unique
   passwordHash String
-  role         Role         @default(STUDENT)
-  submissions  Submission[] @relation("StudentSubmissions")
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  role         Role             @default(STUDENT)
+  submissions  Submission[]     @relation("StudentSubmissions")
+  likes        ProjectLike[]    @relation("UserLikes")
+  comments     ProjectComment[] @relation("UserComments")
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   @@index([email])
 }
 
 model Submission {
-  id          String           @id @default(uuid())
-  studentId   String
-  student     User             @relation("StudentSubmissions", fields: [studentId], references: [id], onDelete: Cascade)
-  projectName String
-  repoUrl     String
-  liveUrl     String?
-  description String
-  status      SubmissionStatus @default(PENDING)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id            String           @id @default(uuid())
+  studentId     String
+  student       User             @relation("StudentSubmissions", fields: [studentId], references: [id], onDelete: Cascade)
+  projectName   String
+  repoUrl       String
+  liveUrl       String?
+  description   String           @db.Text
+  category      String?          @default("Full Stack")
+  screenshotUrl String?
+
+  status        SubmissionStatus @default(PENDING)
+
+  // ── Mentor Evaluation ─────────────────────────────
+  rating        Int?             // 1 to 5 stars
+  feedback      String?          @db.Text
+  reviewedAt    DateTime?
+
+  // ── Social Relations ──────────────────────────────
+  likes         ProjectLike[]    @relation("SubmissionLikes")
+  comments      ProjectComment[] @relation("SubmissionComments")
+
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
   // Database-level constraint: Prevents duplicate repository submissions by the same student
   @@unique([studentId, repoUrl], name: "unique_student_repo")
   @@index([studentId])
   @@index([status])
+}
+
+model ProjectLike {
+  id           String     @id @default(uuid())
+  submissionId String
+  userId       String
+  submission   Submission @relation("SubmissionLikes", fields: [submissionId], references: [id], onDelete: Cascade)
+  user         User       @relation("UserLikes", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([submissionId, userId], name: "unique_submission_like")
+  @@index([submissionId])
+}
+
+model ProjectComment {
+  id           String     @id @default(uuid())
+  submissionId String
+  userId       String
+  content      String     @db.Text
+  submission   Submission @relation("SubmissionComments", fields: [submissionId], references: [id], onDelete: Cascade)
+  user         User       @relation("UserComments", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@index([submissionId])
 }

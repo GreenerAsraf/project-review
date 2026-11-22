@@ -58,13 +58,34 @@ export const createSubmissionSchema = z.object({
     )
     .optional()
     .or(z.literal("")),
+  category: z
+    .enum(["Full Stack", "Frontend", "API & Backend", "Mobile", "UI/UX"])
+    .optional(),
+  screenshotUrl: z
+    .string()
+    .trim()
+    .url("Screenshot URL must be a valid URL starting with http:// or https://")
+    .optional()
+    .or(z.literal("")),
 });
 
-// Mentor review / status update schema
+// Mentor review / evaluation schema — includes star rating and feedback
 export const updateSubmissionStatusSchema = z.object({
   status: z.enum(["APPROVED", "REJECTED"], {
     message: "Status must be either APPROVED or REJECTED",
   }),
+  rating: z
+    .number()
+    .int()
+    .min(1, "Rating must be at least 1")
+    .max(5, "Rating cannot exceed 5")
+    .optional(),
+  feedback: z
+    .string()
+    .trim()
+    .min(5, "Feedback must be at least 5 characters")
+    .max(2000, "Feedback cannot exceed 2000 characters")
+    .optional(),
 });
 
 // Student edit submission schema (only allowed on PENDING submissions)
@@ -89,6 +110,15 @@ export const updateSubmissionSchema = z.object({
       (url) => /^https?:\/\//i.test(url),
       "Live URL must use http or https protocol"
     )
+    .optional()
+    .or(z.literal("")),
+  category: z
+    .enum(["Full Stack", "Frontend", "API & Backend", "Mobile", "UI/UX"])
+    .optional(),
+  screenshotUrl: z
+    .string()
+    .trim()
+    .url("Screenshot URL must be a valid URL starting with http:// or https://")
     .optional()
     .or(z.literal("")),
 });
@@ -123,9 +153,19 @@ export const updateProfileSchema = z
     }
   );
 
+// Comment creation schema
+export const createCommentSchema = z.object({
+  content: z
+    .string()
+    .trim()
+    .min(2, "Comment must be at least 2 characters long")
+    .max(400, "Comment cannot exceed 400 characters"),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreateSubmissionInput = z.infer<typeof createSubmissionSchema>;
 export type UpdateSubmissionStatusInput = z.infer<typeof updateSubmissionStatusSchema>;
 export type UpdateSubmissionInput = z.infer<typeof updateSubmissionSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+export type CreateCommentInput = z.infer<typeof createCommentSchema>;
