@@ -185,6 +185,10 @@ export default function Home() {
 
           {/* Desktop nav links */}
           <nav className="hidden md:flex items-center gap-6 text-sm text-slate-400">
+            <Link href="/showcase" className="hover:text-white transition-colors flex items-center gap-1.5 text-blue-400 font-semibold">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Showcase</span>
+            </Link>
             <a href="#features" className="hover:text-white transition-colors">Features</a>
             <a href="#how-it-works" className="hover:text-white transition-colors">How it Works</a>
             <a href="#stats" className="hover:text-white transition-colors">Stats</a>
@@ -235,6 +239,10 @@ export default function Home() {
         {/* Mobile menu */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-white/5 bg-slate-950 px-6 py-4 flex flex-col gap-4">
+            <Link href="/showcase" onClick={() => setMobileMenuOpen(false)} className="text-sm font-semibold text-blue-400 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Showcase Gallery</span>
+            </Link>
             <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-300">Features</a>
             <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-300">How it Works</a>
             <a href="#stats" onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-300">Stats</a>
@@ -290,12 +298,20 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row items-center gap-4 justify-center mb-16">
             {user ? (
-              <Link href={dashboardUrl}>
-                <Button size="lg" className="px-8 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold shadow-2xl shadow-blue-600/30 transition-all group cursor-pointer flex items-center gap-2">
-                  Go to {user.role === "MENTOR" ? "Mentor Dashboard" : "Student Dashboard"}
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
+              <>
+                <Link href={dashboardUrl}>
+                  <Button size="lg" className="px-8 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold shadow-2xl shadow-blue-600/30 transition-all group cursor-pointer flex items-center gap-2">
+                    Go to {user.role === "MENTOR" ? "Mentor Dashboard" : "Student Dashboard"}
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+                <Link href="/showcase">
+                  <Button variant="outline" size="lg" className="px-6 h-12 border-amber-400/30 bg-amber-400/5 hover:bg-amber-400/10 text-amber-300 font-semibold backdrop-blur-sm cursor-pointer flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    Explore Showcase
+                  </Button>
+                </Link>
+              </>
             ) : (
               <>
                 <Link href="/register">
@@ -304,9 +320,15 @@ export default function Home() {
                     <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
+                <Link href="/showcase">
+                  <Button variant="outline" size="lg" className="px-6 h-12 border-amber-400/30 bg-amber-400/5 hover:bg-amber-400/10 text-amber-300 font-semibold backdrop-blur-sm cursor-pointer flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    Explore Showcase
+                  </Button>
+                </Link>
                 <Link href="/login">
                   <Button variant="outline" size="lg" className="px-8 h-12 border-white/20 bg-white/5 hover:bg-white/10 text-white font-medium backdrop-blur-sm cursor-pointer">
-                    Sign In to Dashboard
+                    Sign In
                   </Button>
                 </Link>
               </>

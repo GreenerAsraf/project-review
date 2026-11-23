@@ -13,6 +13,7 @@ import {
 import { NavigationBar } from "@/components/NavigationBar";
 import { ShowcaseCard } from "@/components/ShowcaseCard";
 import { ProjectDetailModal } from "@/components/ProjectDetailModal";
+import { ShowcaseSlideshow } from "@/components/ShowcaseSlideshow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -322,6 +323,9 @@ function ShowcaseContent() {
 
         {/* Main Gallery Area */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-10 space-y-8">
+          {/* Featured Spotlight Hero Slideshow */}
+          <ShowcaseSlideshow onSelectProject={openProjectModal} />
+
           {/* Controls Bar: Tabs, Search, Categories, Sort */}
           <div className="flex flex-col gap-5 bg-white/3 p-5 rounded-2xl border border-white/10 shadow-xl">
             {/* Top row: Tab Switcher (if logged in) + Search + Sort */}
