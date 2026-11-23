@@ -242,27 +242,6 @@ function ShowcaseContent() {
         <NavigationBar
           variant="dark"
           subtitle="Student Project Showcase"
-          rightContent={
-            <div className="flex items-center gap-2">
-              {user ? (
-                <Button
-                  size="sm"
-                  onClick={() => router.push(user.role === "MENTOR" ? "/mentor" : "/student")}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-semibold cursor-pointer text-xs sm:text-sm shadow-lg shadow-blue-600/30"
-                >
-                  Dashboard
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  onClick={() => router.push("/login")}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-semibold cursor-pointer text-xs sm:text-sm shadow-lg shadow-blue-600/30"
-                >
-                  Sign In
-                </Button>
-              )}
-            </div>
-          }
         />
 
         {/* Toast Notification */}

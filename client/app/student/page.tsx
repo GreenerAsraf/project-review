@@ -334,23 +334,15 @@ export default function StudentDashboard() {
           variant="dark"
           subtitle={`Student Portal • ${user?.name || "Student"}`}
           rightContent={
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                onClick={() => setShowModal(true)}
-                className="bg-blue-600 hover:bg-blue-500 text-white font-semibold cursor-pointer shadow-lg shadow-blue-600/30 text-xs sm:text-sm"
-              >
-                <Plus className="w-4 h-4 mr-1" /> New Project
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={logout}
-                className="border-white/20 text-white hover:bg-white/10 cursor-pointer text-xs sm:text-sm"
-              >
-                Sign Out
-              </Button>
-            </div>
+            <Button
+              size="sm"
+              onClick={() => setShowModal(true)}
+              className="bg-blue-600 hover:bg-blue-500 text-white font-semibold cursor-pointer shadow-lg shadow-blue-600/30 text-xs sm:text-sm px-2.5 sm:px-3 py-1.5"
+            >
+              <Plus className="w-4 h-4 sm:mr-1" />
+              <span className="hidden sm:inline">New Project</span>
+              <span className="sm:hidden">New</span>
+            </Button>
           }
         />
 

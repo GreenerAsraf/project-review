@@ -95,9 +95,10 @@ export default function LoginPage() {
         <NavigationBar
           variant="dark"
           subtitle="Authentication"
+          showUserMenu={false}
           rightContent={
             <Link href="/register">
-              <Button size="sm" variant="outline" className="text-white border-white/20 bg-white/10 hover:bg-white/20">
+              <Button size="sm" variant="outline" className="text-white border-white/20 bg-white/10 hover:bg-white/20 cursor-pointer">
                 Register
               </Button>
             </Link>

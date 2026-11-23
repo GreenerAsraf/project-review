@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { NavigationBar } from "@/components/NavigationBar";
+import { UserAvatar } from "@/components/UserAvatar";
 import { updateProfile, UpdateProfilePayload } from "@/lib/api";
 import {
   User,
@@ -190,13 +191,29 @@ export default function SettingsPage() {
           <div className="space-y-6">
             {/* ── Account Info Card ── */}
             <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-6">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-9 h-9 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                  <ShieldCheck className="w-5 h-5 text-blue-400" />
-                </div>
+              <div className="flex items-center gap-4 mb-6 pb-5 border-b border-white/10">
+                <UserAvatar
+                  name={user?.name}
+                  email={user?.email}
+                  role={user?.role}
+                  size="lg"
+                  floating={true}
+                  showOnlineDot={true}
+                />
                 <div>
-                  <h2 className="text-base font-semibold text-white">Account Info</h2>
-                  <p className="text-xs text-slate-400">Your read-only account details</p>
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    {user?.name}
+                    <span
+                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                        user?.role === "MENTOR"
+                          ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                          : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                      }`}
+                    >
+                      {user?.role}
+                    </span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-0.5">{user?.email}</p>
                 </div>
               </div>
 

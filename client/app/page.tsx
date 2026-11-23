@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
+import { UserProfileMenu } from "@/components/UserProfileMenu";
+import { UserAvatar } from "@/components/UserAvatar";
 import {
   ArrowRight,
   CheckCircle2,
@@ -112,7 +114,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 /* ─── Main Page ─────────────────────────────────────────────── */
 export default function Home() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [stats, setStats] = useState<PublicStats | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -195,50 +197,75 @@ export default function Home() {
             <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
           </nav>
 
-          {/* Desktop CTA */}
+          {/* Desktop User Profile / CTA */}
           <div className="hidden md:flex items-center gap-3">
-            {user ? (
-              <>
-                <Link href="/settings">
-                  <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/10 text-sm cursor-pointer">
-                    Settings
-                  </Button>
-                </Link>
-                <Link href={dashboardUrl}>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-600/30 cursor-pointer flex items-center gap-1.5">
-                    Dashboard
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Button>
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href="/login">
-                  <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/10 text-sm cursor-pointer">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/register">
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-600/30 cursor-pointer">
-                    Get Started
-                  </Button>
-                </Link>
-              </>
-            )}
+            <UserProfileMenu />
           </div>
 
-          {/* Mobile hamburger */}
-          <button
-            className="md:hidden p-2 text-slate-400 hover:text-white"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          {/* Mobile Right Controls: Floating User Pill (if logged in) + Hamburger */}
+          <div className="flex md:hidden items-center gap-2">
+            {user ? (
+              <div className="flex items-center gap-2 py-1 px-2 rounded-full bg-slate-900 border border-white/10">
+                <UserAvatar
+                  name={user.name}
+                  email={user.email}
+                  role={user.role}
+                  size="xs"
+                  floating={true}
+                  showOnlineDot={true}
+                />
+                <span className="text-xs font-semibold text-white max-w-[80px] truncate">
+                  {user.name.split(" ")[0]}
+                </span>
+              </div>
+            ) : (
+              <Link href="/login">
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-500 text-xs px-2.5 py-1 text-white font-semibold">
+                  Sign In
+                </Button>
+              </Link>
+            )}
+
+            <button
+              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-white/5 cursor-pointer"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-white/5 bg-slate-950 px-6 py-4 flex flex-col gap-4">
+          <div className="md:hidden border-t border-white/5 bg-slate-950 px-6 py-4 flex flex-col gap-4 animate-fade-in-up">
+            {/* User Profile Card (if logged in) */}
+            {user && (
+              <div className="flex items-center gap-3 p-3 bg-white/5 rounded-2xl border border-white/10">
+                <UserAvatar
+                  name={user.name}
+                  email={user.email}
+                  role={user.role}
+                  size="md"
+                  floating={true}
+                  showOnlineDot={true}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-white truncate">{user.name}</p>
+                  <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                  <span
+                    className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5 ${
+                      user.role === "MENTOR"
+                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                        : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                    }`}
+                  >
+                    {user.role}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <Link href="/showcase" onClick={() => setMobileMenuOpen(false)} className="text-sm font-semibold text-blue-400 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>Showcase Gallery</span>
@@ -247,28 +274,48 @@ export default function Home() {
             <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-300">How it Works</a>
             <a href="#stats" onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-300">Stats</a>
             <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-300">FAQ</a>
-            <div className="flex gap-3 pt-2 border-t border-white/5">
+
+            <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
               {user ? (
                 <>
-                  <Link href="/settings" onClick={() => setMobileMenuOpen(false)} className="flex-1">
-                    <Button variant="outline" size="sm" className="w-full border-white/20 text-white cursor-pointer">Settings</Button>
-                  </Link>
-                  <Link href={dashboardUrl} onClick={() => setMobileMenuOpen(false)} className="flex-1">
-                    <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-500 cursor-pointer flex items-center justify-center gap-1">
-                      Dashboard
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Button>
-                  </Link>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link href="/settings" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" size="sm" className="w-full border-white/20 text-white cursor-pointer">
+                        Settings
+                      </Button>
+                    </Link>
+                    <Link href={dashboardUrl} onClick={() => setMobileMenuOpen(false)}>
+                      <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-500 cursor-pointer flex items-center justify-center gap-1">
+                        Dashboard
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Button>
+                    </Link>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      logout();
+                    }}
+                    className="w-full text-rose-400 hover:text-white hover:bg-rose-500/20 cursor-pointer text-xs"
+                  >
+                    Sign Out
+                  </Button>
                 </>
               ) : (
-                <>
+                <div className="flex gap-2">
                   <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex-1">
-                    <Button variant="outline" size="sm" className="w-full border-white/20 text-white cursor-pointer">Sign In</Button>
+                    <Button variant="outline" size="sm" className="w-full border-white/20 text-white cursor-pointer">
+                      Sign In
+                    </Button>
                   </Link>
                   <Link href="/register" onClick={() => setMobileMenuOpen(false)} className="flex-1">
-                    <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-500 cursor-pointer">Get Started</Button>
+                    <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-500 cursor-pointer">
+                      Get Started
+                    </Button>
                   </Link>
-                </>
+                </div>
               )}
             </div>
           </div>

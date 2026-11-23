@@ -260,16 +260,6 @@ export default function MentorDashboard() {
         <NavigationBar
           variant="dark"
           subtitle={`Mentor Portal • ${user?.name || "Mentor"}`}
-          rightContent={
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={logout}
-              className="border-white/20 text-white hover:bg-white/10 cursor-pointer"
-            >
-              Sign Out
-            </Button>
-          }
         />
 
         {/* Toast Notification */}
